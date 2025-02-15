@@ -296,8 +296,19 @@
         this.authForms.style.display = 'none';
         this.userInfo.style.display = 'block';
         this.form.style.display = 'block';
-        this.todosContainer.style.display = 'grid';
-        this.loadTodos(); // Enable real-time sync when user logs in
+        this.todosContainer.style.display = 'grid';  // Ensure the todo list is shown
+
+        // Firestore listener
+        db.collection('todos')
+            .where('userId', '==', user.uid)
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                this.todos = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                this.renderTodos();
+            });
     } else {
         this.authForms.style.display = 'block';
         this.userInfo.style.display = 'none';
@@ -307,6 +318,7 @@
         this.renderTodos();
     }
 }
+            
 
             async loadTodos() {
                 try {
@@ -326,31 +338,34 @@
             }
 
             async handleSubmit(e) {
-                e.preventDefault();
-                const text = this.input.value.trim();
-                if (text) {
-                    await this.addTodo(text);
-                    this.input.value = '';
-                }
-            }
+    e.preventDefault();
+    const text = this.input.value.trim();
+    if (text) {
+        await this.addTodo(text);
+        this.input.value = '';
+        this.renderTodos(); // Ensure re-rendering
+    }
+}
 
             async addTodo(text) {
-                try {
-                    const todo = {
-                        text,
-                        completed: false,
-                        category: text.toLowerCase().includes('add') ? 'add' : 'main',
-                        userId: this.currentUser.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
+    try {
+        const newTodo = {
+            text,
+            completed: false,
+            category: text.toLowerCase().includes('add') ? 'add' : 'main',
+            userId: this.currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-                    const docRef = await db.collection('todos').add(todo);
-                    this.todos.push({ ...todo, id: docRef.id });
-                    this.renderTodos();
-                } catch (error) {
-                    console.error('Error adding todo:', error);
-                }
-            }
+        const docRef = await db.collection('todos').add(newTodo);
+        
+        // Update UI immediately
+        this.todos.push({ id: docRef.id, ...newTodo });
+        this.renderTodos();
+    } catch (error) {
+        console.error('Error adding todo:', error);
+    }
+}
 
             async toggleTodo(id) {
                 try {

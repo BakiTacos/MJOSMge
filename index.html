@@ -411,3 +411,35 @@
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
+
+                li.appendChild(checkbox);
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
+
+                return li;
+            }
+
+            renderTodos() {
+                const addCategoryTodos = this.todos.filter(todo => todo.category === 'add');
+                const mainTodos = this.todos.filter(todo => todo.category === 'main');
+
+                this.addCategoryList.innerHTML = '';
+                this.mainTodoList.innerHTML = '';
+
+                addCategoryTodos.forEach(todo => {
+                    this.addCategoryList.appendChild(this.createTodoElement(todo));
+                });
+
+                mainTodos.forEach(todo => {
+                    this.mainTodoList.appendChild(this.createTodoElement(todo));
+                });
+            }
+        }
+
+        // Initialize the app
+        const app = new TodoApp();
+    </script>
+</body>
+</html>

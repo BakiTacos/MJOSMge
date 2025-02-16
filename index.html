@@ -199,7 +199,8 @@
     </div>
 
 <script type="module">
-        import firebaseConfig from './firebase-config.js';
+        const auth = firebase.auth();
+        const db = firebase.database();
     
         class TodoApp {
             constructor() {

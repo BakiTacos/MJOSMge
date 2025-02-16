@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Todo List</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script> <!-- Ensure this is included -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -186,18 +187,19 @@
             </section>
 
             <section class="todo-section">
+                <h2>WA Category</h2>
+                <ul class="todo-list" id="waCategoryList"></ul>
+            </section>
+
+            <section class="todo-section">
                 <h2>Main Todo List</h2>
                 <ul class="todo-list" id="mainTodoList"></ul>
             </section>
         </div>
     </div>
 
-    <script>
-        import firebaseConfig from './firebase-config.js';
+<script type="module">
     
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
     
         class TodoApp {
             constructor() {
@@ -205,6 +207,7 @@
                 this.form = document.getElementById('todoForm');
                 this.input = document.getElementById('todoInput');
                 this.addCategoryList = document.getElementById('addCategoryList');
+                this.waCategoryList = document.getElementById('waCategoryList');
                 this.mainTodoList = document.getElementById('mainTodoList');
                 this.userInfo = document.getElementById('userInfo');
                 this.userEmail = document.getElementById('userEmail');
@@ -313,11 +316,17 @@
     
                 try {
                     const newTodoRef = db.ref(`todos/${this.currentUser.uid}`).push();
+                    let category = 'main';
+                    if (text.toLowerCase().includes('add')) {
+                        category = 'add';
+                    } else if (text.toLowerCase().includes('wa')) {
+                        category = 'wa';
+                    }
                     await newTodoRef.set({
                         text,
                         completed: false,
-                        category: text.toLowerCase().includes('add') ? 'add' : 'main',
-                        createdAt: Date.now() // Timestamp for sorting
+                        category,
+                        createdAt: Date.now()
                     });
                 } catch (error) {
                     console.error('Error adding todo:', error);
@@ -373,20 +382,55 @@
                 li.appendChild(checkbox);
                 li.appendChild(span);
     
+                if (todo.category === 'wa') {
+                    const shareBtn = document.createElement('button');
+                    shareBtn.textContent = 'Share on WhatsApp';
+                    shareBtn.className = 'btn';
+                    shareBtn.style.marginLeft = 'auto';
+                    shareBtn.style.fontSize = '0.8rem';
+                    shareBtn.style.padding = '0.5rem 1rem';
+                    shareBtn.addEventListener('click', () => {
+                        const text = encodeURIComponent(todo.text);
+                        window.open(`https://wa.me/+6282110683255?text=${text}`);
+                    });
+                    li.appendChild(shareBtn);
+                }
+
                 return li;
             }
-    
+
             renderTodos() {
                 const addCategoryTodos = this.todos.filter(todo => todo.category === 'add');
+                const waCategoryTodos = this.todos.filter(todo => todo.category === 'wa');
                 const mainTodos = this.todos.filter(todo => todo.category === 'main');
-    
+
                 this.addCategoryList.innerHTML = '';
+                this.waCategoryList.innerHTML = '';
                 this.mainTodoList.innerHTML = '';
-    
+
                 addCategoryTodos.forEach(todo => {
                     this.addCategoryList.appendChild(this.createTodoElement(todo));
                 });
-    
+
+                waCategoryTodos.forEach(todo => {
+                    this.waCategoryList.appendChild(this.createTodoElement(todo));
+                });
+
+                // Add Share All button for WA category
+                if (waCategoryTodos.length > 0) {
+                    const shareAllBtn = document.createElement('button');
+                    shareAllBtn.textContent = 'Share All to WhatsApp';
+                    shareAllBtn.className = 'btn';
+                    shareAllBtn.style.width = '100%';
+                    shareAllBtn.style.marginTop = '1rem';
+                    shareAllBtn.addEventListener('click', () => {
+                        const allTasks = waCategoryTodos.map(todo => todo.text).join('\n');
+                        const text = encodeURIComponent(allTasks);
+                        window.open(`https://wa.me/+6282110683255?text=${text}`);
+                    });
+                    this.waCategoryList.appendChild(shareAllBtn);
+                }
+
                 mainTodos.forEach(todo => {
                     this.mainTodoList.appendChild(this.createTodoElement(todo));
                 });

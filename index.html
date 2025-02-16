@@ -6,7 +6,7 @@
     <title>Smart Todo List</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -195,19 +195,67 @@
     <script>
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
-            authDomain: "mjosmgedb.firebaseapp.com",
-            projectId: "mjosmgedb",
-            storageBucket: "mjosmgedb.firebasestorage.app",
-            messagingSenderId: "92899208044",
-            appId: "1:92899208044:web:c765306470956717952149",
-            measurementId: "G-5045ZX790R"
-        };
+    apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
+    authDomain: "mjosmgedb.firebaseapp.com",
+    databaseURL: "https://mjosmgedb-default-rtdb.asia-southeast1.firebasedatabase.app/", // Ensure you have this line
+    projectId: "mjosmgedb",
+    storageBucket: "mjosmgedb.appspot.com",
+    messagingSenderId: "92899208044",
+    appId: "1:92899208044:web:c765306470956717952149",
+    measurementId: "G-5045ZX790R"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Initialize Firebase Realtime Database
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db = firebase.database();
+
+        function addTodoToRealtimeDB(todoText) {
+    const userId = firebase.auth().currentUser.uid;
+    const newTodoRef = database.ref(`todos/${userId}`).push();
+
+    newTodoRef.set({
+        text: todoText,
+        completed: false,
+        createdAt: new Date().toISOString()
+    });
+}
+
+function listenForTodos() {
+    const userId = firebase.auth().currentUser.uid;
+    database.ref(`todos/${userId}`).on('value', (snapshot) => {
+        const todos = snapshot.val();
+        console.log('Todos:', todos);
+    });
+}
+
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        console.log("User is authenticated:", user.uid);
+    } else {
+        console.log("User is not authenticated. Redirecting to login...");
+        alert("You must be logged in to add a todo.");
+        // Optionally, redirect to the login page
+    }
+});
+
+const user = firebase.auth().currentUser;
+if (user) {
+    const database = firebase.database();
+    database.ref(`todos/${user.uid}`).push({
+        text: "My new task",
+        completed: false,
+        createdAt: new Date().toISOString()
+    }).then(() => {
+        console.log("Todo added successfully!");
+    }).catch((error) => {
+        console.error("Error adding todo:", error);
+    });
+} else {
+    console.error("User is not authenticated.");
+}
 
         class TodoApp {
             constructor() {
@@ -255,13 +303,15 @@
                 this.registerForm.addEventListener('submit', (e) => this.handleRegister(e));
             }
 
+            
+
             async handleLogin(e) {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
 
                 try {
-                    await auth.signInWithEmailAndPassword(email, password);
+                    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                     this.loginForm.reset();
                 } catch (error) {
                     alert('Login failed: ' + error.message);
@@ -296,19 +346,9 @@
         this.authForms.style.display = 'none';
         this.userInfo.style.display = 'block';
         this.form.style.display = 'block';
-        this.todosContainer.style.display = 'grid';  // Ensure the todo list is shown
-
-        // Firestore listener
-        db.collection('todos')
-            .where('userId', '==', user.uid)
-            .orderBy('createdAt', 'desc')
-            .onSnapshot(snapshot => {
-                this.todos = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                this.renderTodos();
-            });
+        this.todosContainer.style.display = 'grid';
+        
+        this.loadTodos(); // Load todos from Realtime Database
     } else {
         this.authForms.style.display = 'block';
         this.userInfo.style.display = 'none';
@@ -320,22 +360,6 @@
 }
             
 
-            async loadTodos() {
-                try {
-                    const snapshot = await db.collection('todos')
-                        .where('userId', '==', this.currentUser.uid)
-                        .get();
-                    
-                    this.todos = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
-                    
-                    this.renderTodos();
-                } catch (error) {
-                    console.error('Error loading todos:', error);
-                }
-            }
 
             async handleSubmit(e) {
     e.preventDefault();
@@ -347,70 +371,56 @@
     }
 }
 
-            async addTodo(text) {
+async addTodo(text) {
     try {
-        const newTodo = {
+        const newTodoRef = db.ref('todos').push();
+        await newTodoRef.set({
             text,
             completed: false,
             category: text.toLowerCase().includes('add') ? 'add' : 'main',
             userId: this.currentUser.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        const docRef = await db.collection('todos').add(newTodo);
-        
-        // Update UI immediately
-        this.todos.push({ id: docRef.id, ...newTodo });
-        this.renderTodos();
+            createdAt: Date.now() // Using timestamp for sorting
+        });
     } catch (error) {
         console.error('Error adding todo:', error);
     }
 }
 
-            async toggleTodo(id) {
-                try {
-                    const todo = this.todos.find(t => t.id === id);
-                    const newCompleted = !todo.completed;
-
-                    await db.collection('todos').doc(id).update({
-                        completed: newCompleted
-                    });
-
-                    this.todos = this.todos.map(todo =>
-                        todo.id === id ? { ...todo, completed: newCompleted } : todo
-                    );
-                    this.renderTodos();
-                } catch (error) {
-                    console.error('Error toggling todo:', error);
-                }
+async toggleTodo(id) {
+    try {
+        const todoRef = db.ref(`todos/${id}`);
+        todoRef.once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                const currentData = snapshot.val();
+                todoRef.update({ completed: !currentData.completed });
             }
+        });
+    } catch (error) {
+        console.error('Error toggling todo:', error);
+    }
+}
 
-            async deleteTodo(id) {
-                try {
-                    await db.collection('todos').doc(id).delete();
-                    this.todos = this.todos.filter(todo => todo.id !== id);
-                    this.renderTodos();
-                } catch (error) {
-                    console.error('Error deleting todo:', error);
-                }
-            }
+async deleteTodo(id) {
+    try {
+        await db.ref(`todos/${id}`).remove();
+    } catch (error) {
+        console.error('Error deleting todo:', error);
+    }
+}
 
-            async loadTodos() {
-                try {
-                    db.collection('todos')
-                        .where('userId', '==', this.currentUser.uid)
-                        .orderBy('createdAt', 'desc')
-                        .onSnapshot(snapshot => {
-                            this.todos = snapshot.docs.map(doc => ({
-                                id: doc.id,
-                                ...doc.data()
-                            }));
-                            this.renderTodos(); // Update UI dynamically
-                        });
-                } catch (error) {
-                    console.error('Error loading todos:', error);
-                }
+            loadTodos() {
+    db.ref('todos').orderByChild('createdAt').on('value', (snapshot) => {
+        const todos = [];
+        snapshot.forEach((childSnapshot) => {
+            const todo = { id: childSnapshot.key, ...childSnapshot.val() };
+            if (todo.userId === this.currentUser.uid) {
+                todos.push(todo);
             }
+        });
+        this.todos = todos.reverse(); // Display newest first
+        this.renderTodos();
+    });
+}
 
             createTodoElement(todo) {
                 const li = document.createElement('li');

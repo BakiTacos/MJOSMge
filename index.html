@@ -193,70 +193,22 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase initialization
         const firebaseConfig = {
-    apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
-    authDomain: "mjosmgedb.firebaseapp.com",
-    databaseURL: "https://mjosmgedb-default-rtdb.asia-southeast1.firebasedatabase.app/", // Ensure you have this line
-    projectId: "mjosmgedb",
-    storageBucket: "mjosmgedb.appspot.com",
-    messagingSenderId: "92899208044",
-    appId: "1:92899208044:web:c765306470956717952149",
-    measurementId: "G-5045ZX790R"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Initialize Firebase Realtime Database
+            apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
+            authDomain: "mjosmgedb.firebaseapp.com",
+            databaseURL: "https://mjosmgedb-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "mjosmgedb",
+            storageBucket: "mjosmgedb.appspot.com",
+            messagingSenderId: "92899208044",
+            appId: "1:92899208044:web:c765306470956717952149",
+            measurementId: "G-5045ZX790R"
+        };
+    
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-
-        function addTodoToRealtimeDB(todoText) {
-    const userId = firebase.auth().currentUser.uid;
-    const newTodoRef = database.ref(`todos/${userId}`).push();
-
-    newTodoRef.set({
-        text: todoText,
-        completed: false,
-        createdAt: new Date().toISOString()
-    });
-}
-
-function listenForTodos() {
-    const userId = firebase.auth().currentUser.uid;
-    database.ref(`todos/${userId}`).on('value', (snapshot) => {
-        const todos = snapshot.val();
-        console.log('Todos:', todos);
-    });
-}
-
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        console.log("User is authenticated:", user.uid);
-    } else {
-        console.log("User is not authenticated. Redirecting to login...");
-        alert("You must be logged in to add a todo.");
-        // Optionally, redirect to the login page
-    }
-});
-
-const user = firebase.auth().currentUser;
-if (user) {
-    const database = firebase.database();
-    database.ref(`todos/${user.uid}`).push({
-        text: "My new task",
-        completed: false,
-        createdAt: new Date().toISOString()
-    }).then(() => {
-        console.log("Todo added successfully!");
-    }).catch((error) => {
-        console.error("Error adding todo:", error);
-    });
-} else {
-    console.error("User is not authenticated.");
-}
-
+    
         class TodoApp {
             constructor() {
                 this.todos = [];
@@ -274,55 +226,53 @@ if (user) {
                 this.currentUser = null;
                 this.init();
             }
-
+    
             async init() {
                 this.setupAuthUI();
                 this.setupAuthListeners();
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
                 auth.onAuthStateChanged(user => this.handleAuthStateChange(user));
             }
-
+    
             setupAuthUI() {
                 document.getElementById('showRegister').addEventListener('click', (e) => {
                     e.preventDefault();
                     this.loginForm.style.display = 'none';
                     this.registerForm.style.display = 'block';
                 });
-
+    
                 document.getElementById('showLogin').addEventListener('click', (e) => {
                     e.preventDefault();
                     this.registerForm.style.display = 'none';
                     this.loginForm.style.display = 'block';
                 });
-
+    
                 this.logoutBtn.addEventListener('click', () => this.handleLogout());
             }
-
+    
             setupAuthListeners() {
                 this.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
                 this.registerForm.addEventListener('submit', (e) => this.handleRegister(e));
             }
-
-            
-
+    
             async handleLogin(e) {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
-
+    
                 try {
-                    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
                     this.loginForm.reset();
                 } catch (error) {
                     alert('Login failed: ' + error.message);
                 }
             }
-
+    
             async handleRegister(e) {
                 e.preventDefault();
                 const email = document.getElementById('registerEmail').value;
                 const password = document.getElementById('registerPassword').value;
-
+    
                 try {
                     await auth.createUserWithEmailAndPassword(email, password);
                     this.registerForm.reset();
@@ -330,7 +280,7 @@ if (user) {
                     alert('Registration failed: ' + error.message);
                 }
             }
-
+    
             async handleLogout() {
                 try {
                     await auth.signOut();
@@ -338,131 +288,133 @@ if (user) {
                     console.error('Logout failed:', error);
                 }
             }
-
+    
             handleAuthStateChange(user) {
-    this.currentUser = user;
-    if (user) {
-        this.userEmail.textContent = user.email;
-        this.authForms.style.display = 'none';
-        this.userInfo.style.display = 'block';
-        this.form.style.display = 'block';
-        this.todosContainer.style.display = 'grid';
-        
-        this.loadTodos(); // Load todos from Realtime Database
-    } else {
-        this.authForms.style.display = 'block';
-        this.userInfo.style.display = 'none';
-        this.form.style.display = 'none';
-        this.todosContainer.style.display = 'none';
-        this.todos = [];
-        this.renderTodos();
-    }
-}
-            
-
-
+                this.currentUser = user;
+                if (user) {
+                    this.userEmail.textContent = user.email;
+                    this.authForms.style.display = 'none';
+                    this.userInfo.style.display = 'block';
+                    this.form.style.display = 'block';
+                    this.todosContainer.style.display = 'grid';
+    
+                    this.loadTodos(); // Load todos only for the logged-in user
+                } else {
+                    this.authForms.style.display = 'block';
+                    this.userInfo.style.display = 'none';
+                    this.form.style.display = 'none';
+                    this.todosContainer.style.display = 'none';
+                    this.todos = [];
+                    this.renderTodos();
+                }
+            }
+    
             async handleSubmit(e) {
-    e.preventDefault();
-    const text = this.input.value.trim();
-    if (text) {
-        await this.addTodo(text);
-        this.input.value = '';
-        this.renderTodos(); // Ensure re-rendering
-    }
-}
-
-async addTodo(text) {
-    try {
-        const newTodoRef = db.ref('todos').push();
-        await newTodoRef.set({
-            text,
-            completed: false,
-            category: text.toLowerCase().includes('add') ? 'add' : 'main',
-            userId: this.currentUser.uid,
-            createdAt: Date.now() // Using timestamp for sorting
-        });
-    } catch (error) {
-        console.error('Error adding todo:', error);
-    }
-}
-
-async toggleTodo(id) {
-    try {
-        const todoRef = db.ref(`todos/${id}`);
-        todoRef.once('value', (snapshot) => {
-            if (snapshot.exists()) {
-                const currentData = snapshot.val();
-                todoRef.update({ completed: !currentData.completed });
+                e.preventDefault();
+                const text = this.input.value.trim();
+                if (text) {
+                    await this.addTodo(text);
+                    this.input.value = '';
+                }
             }
-        });
-    } catch (error) {
-        console.error('Error toggling todo:', error);
-    }
-}
-
-async deleteTodo(id) {
-    try {
-        await db.ref(`todos/${id}`).remove();
-    } catch (error) {
-        console.error('Error deleting todo:', error);
-    }
-}
-
+    
+            async addTodo(text) {
+                if (!this.currentUser) return;
+    
+                try {
+                    const newTodoRef = db.ref(`todos/${this.currentUser.uid}`).push();
+                    await newTodoRef.set({
+                        text,
+                        completed: false,
+                        category: text.toLowerCase().includes('add') ? 'add' : 'main',
+                        createdAt: Date.now() // Timestamp for sorting
+                    });
+                } catch (error) {
+                    console.error('Error adding todo:', error);
+                }
+            }
+    
+            async toggleTodo(todoId) {
+                if (!this.currentUser) return;
+    
+                try {
+                    const todoRef = db.ref(`todos/${this.currentUser.uid}/${todoId}`);
+                    todoRef.once('value', (snapshot) => {
+                        if (snapshot.exists()) {
+                            const currentData = snapshot.val();
+                            todoRef.update({ completed: !currentData.completed });
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error toggling todo:', error);
+                }
+            }
+    
+            async deleteTodo(todoId) {
+                if (!this.currentUser) return;
+    
+                try {
+                    await db.ref(`todos/${this.currentUser.uid}/${todoId}`).remove();
+                } catch (error) {
+                    console.error('Error deleting todo:', error);
+                }
+            }
+    
             loadTodos() {
-    db.ref('todos').orderByChild('createdAt').on('value', (snapshot) => {
-        const todos = [];
-        snapshot.forEach((childSnapshot) => {
-            const todo = { id: childSnapshot.key, ...childSnapshot.val() };
-            if (todo.userId === this.currentUser.uid) {
-                todos.push(todo);
+                if (!this.currentUser) return;
+    
+                db.ref(`todos/${this.currentUser.uid}`).orderByChild('createdAt').on('value', (snapshot) => {
+                    const todos = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const todo = { id: childSnapshot.key, ...childSnapshot.val() };
+                        todos.push(todo);
+                    });
+                    this.todos = todos.reverse(); // Display newest first
+                    this.renderTodos();
+                });
             }
-        });
-        this.todos = todos.reverse(); // Display newest first
-        this.renderTodos();
-    });
-}
-
+    
             createTodoElement(todo) {
                 const li = document.createElement('li');
                 li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-
+    
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = todo.completed;
                 checkbox.addEventListener('change', () => this.toggleTodo(todo.id));
-
+    
                 const span = document.createElement('span');
                 span.textContent = todo.text;
-
+    
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
-
+    
                 li.appendChild(checkbox);
                 li.appendChild(span);
                 li.appendChild(deleteBtn);
-
+    
                 return li;
             }
-
+    
             renderTodos() {
                 const addCategoryTodos = this.todos.filter(todo => todo.category === 'add');
                 const mainTodos = this.todos.filter(todo => todo.category === 'main');
-
+    
                 this.addCategoryList.innerHTML = '';
                 this.mainTodoList.innerHTML = '';
-
+    
                 addCategoryTodos.forEach(todo => {
                     this.addCategoryList.appendChild(this.createTodoElement(todo));
                 });
-
+    
                 mainTodos.forEach(todo => {
                     this.mainTodoList.appendChild(this.createTodoElement(todo));
                 });
             }
         }
-
+    
         // Initialize the app
         const app = new TodoApp();
     </script>

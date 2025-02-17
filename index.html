@@ -503,6 +503,21 @@ const firebaseConfig = {
                         window.open(`https://wa.me/+6282110683255?text=${text}`);
                     });
                     this.waCategoryList.appendChild(shareAllBtn);
+
+                    const deleteAllBtn = document.createElement('button');
+                    deleteAllBtn.textContent = 'Delete All';
+                    deleteAllBtn.className = 'btn';
+                    deleteAllBtn.style.width = '100%';
+                    deleteAllBtn.style.marginTop = '1rem';
+                    deleteAllBtn.style.backgroundColor = '#ef4444';
+                    deleteAllBtn.addEventListener('click', async () => {
+                        if (confirm('Are you sure you want to delete all tasks in WA category?')) {
+                            for (const todo of waCategoryTodos) {
+                                await this.deleteTodo(todo.id);
+                            }
+                        }
+                    });
+                    this.waCategoryList.appendChild(deleteAllBtn);
                 }
 
                 // Add Share All button for Zhonguo List
@@ -518,6 +533,21 @@ const firebaseConfig = {
                         window.open(`https://wa.me/+6282110683255?text=${text}`);
                     });
                     this.zhCategoryList.appendChild(shareAllBtn);
+
+                    const deleteAllBtn = document.createElement('button');
+                    deleteAllBtn.textContent = 'Delete All';
+                    deleteAllBtn.className = 'btn';
+                    deleteAllBtn.style.width = '100%';
+                    deleteAllBtn.style.marginTop = '1rem';
+                    deleteAllBtn.style.backgroundColor = '#ef4444';
+                    deleteAllBtn.addEventListener('click', async () => {
+                        if (confirm('Are you sure you want to delete all tasks in Zhonguo category?')) {
+                            for (const todo of zhCategoryTodos) {
+                                await this.deleteTodo(todo.id);
+                            }
+                        }
+                    });
+                    this.zhCategoryList.appendChild(deleteAllBtn);
                 }
 
                 mainTodos.forEach(todo => {

@@ -183,6 +183,78 @@
     <div class="container">
         <header class="header">
             <h1>Smart Todo List</h1>
+            <nav class="navbar" style="display: none;">
+                <button id="todoNavBtn" class="nav-btn active">Todo List</button>
+                <button id="productNavBtn" class="nav-btn">Product Management</button>
+            </nav>
+            <style>
+                .navbar {
+                    margin: 1rem 0;
+                    display: flex;
+                    justify-content: center;
+                    gap: 1rem;
+                }
+                .nav-btn {
+                    padding: 0.5rem 1rem;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    background-color: #e5e7eb;
+                    color: var(--text-color);
+                    transition: all 0.3s;
+                }
+                .nav-btn.active {
+                    background-color: var(--primary-color);
+                    color: white;
+                }
+                .product-section {
+                    display: none;
+                    background-color: var(--card-bg);
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .product-form {
+                    display: grid;
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                }
+                .product-form input {
+                    width: 100%;
+                    padding: 0.75rem;
+                    font-size: 1rem;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                }
+                .product-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .product-table th,
+                .product-table td {
+                    padding: 0.75rem;
+                    text-align: left;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                .product-table th {
+                    background-color: #f9fafb;
+                }
+                .edit-btn, .delete-product-btn {
+                    padding: 0.25rem 0.5rem;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-right: 0.5rem;
+                }
+                .edit-btn {
+                    background-color: #3b82f6;
+                    color: white;
+                }
+                .delete-product-btn {
+                    background-color: #ef4444;
+                    color: white;
+                }
+            </style>
             <div id="authStatus" style="margin-top: 1rem;">
                 <div id="authForms">
                     <form id="loginForm" class="auth-form">
@@ -238,6 +310,32 @@
                 <ul class="todo-list" id="mainTodoList"></ul>
             </section>
         </div>
+
+        <div id="productSection" class="product-section">
+            <h2>Product Management</h2>
+            <form id="productForm" class="product-form">
+                <input type="text" id="productName" placeholder="Product Name" required>
+                <input type="number" id="productPrice" placeholder="Price in Rupiah" required>
+                <select id="priceUnit" class="product-form-select">
+                    <option value="unit">Per Unit</option>
+                    <option value="dozen">Per Dozen</option>
+                </select>
+                <input type="text" id="productSKU" placeholder="Product Code (SKU)">
+                <button type="submit" class="btn">Add Product</button>
+            </form>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Unit</th>
+                        <th>SKU</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
 <script type="module">
@@ -259,6 +357,7 @@ const firebaseConfig = {
     
         class TodoApp {
             constructor() {
+                this.products = [];
                 this.todos = [];
                 this.form = document.getElementById('todoForm');
                 this.input = document.getElementById('todoInput');
@@ -279,6 +378,8 @@ const firebaseConfig = {
             }
     
             async init() {
+                this.setupNavigation();
+                this.setupProductManagement();
                 this.setupAuthUI();
                 this.setupAuthListeners();
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
@@ -343,11 +444,13 @@ const firebaseConfig = {
             handleAuthStateChange(user) {
                 this.currentUser = user;
                 if (user) {
+                    this.loadProducts();
                     this.userEmail.textContent = user.email;
                     this.authForms.style.display = 'none';
                     this.userInfo.style.display = 'block';
                     this.form.style.display = 'block';
                     this.todosContainer.style.display = 'grid';
+                    document.querySelector('.navbar').style.display = 'flex';
     
                     this.loadTodos(); // Load todos only for the logged-in user
                 } else {
@@ -355,6 +458,7 @@ const firebaseConfig = {
                     this.userInfo.style.display = 'none';
                     this.form.style.display = 'none';
                     this.todosContainer.style.display = 'none';
+                    document.querySelector('.navbar').style.display = 'none';
                     this.todos = [];
                     this.renderTodos();
                 }
@@ -415,6 +519,147 @@ const firebaseConfig = {
                 }
             }
     
+            setupNavigation() {
+                const todoNavBtn = document.getElementById('todoNavBtn');
+                const productNavBtn = document.getElementById('productNavBtn');
+                const todosContainer = document.getElementById('todosContainer');
+                const productSection = document.getElementById('productSection');
+
+                todoNavBtn.addEventListener('click', () => {
+                    todoNavBtn.classList.add('active');
+                    productNavBtn.classList.remove('active');
+                    productSection.style.display = 'none';
+                    todosContainer.style.display = 'grid';
+                });
+
+                productNavBtn.addEventListener('click', () => {
+                    productNavBtn.classList.add('active');
+                    todoNavBtn.classList.remove('active');
+                    todosContainer.style.display = 'none';
+                    productSection.style.display = 'block';
+                });
+            }
+
+            setupProductManagement() {
+                const productForm = document.getElementById('productForm');
+                productForm.addEventListener('submit', (e) => this.handleProductSubmit(e));
+            }
+
+            async handleProductSubmit(e) {
+                e.preventDefault();
+                try {
+                    const name = document.getElementById('productName').value.trim();
+                    const price = parseFloat(document.getElementById('productPrice').value);
+                    const sku = document.getElementById('productSKU').value.trim() || '-';
+                    const priceUnit = document.getElementById('priceUnit').value;
+
+                    const newProductRef = db.ref(`products/${this.currentUser.uid}`).push();
+                    await newProductRef.set({
+                        name,
+                        price,
+                        sku,
+                        priceUnit,
+                        createdAt: Date.now()
+                    });
+                    productForm.reset();
+                } catch (error) {
+                    console.error('Error adding product:', error);
+                }
+            }
+
+            loadProducts() {
+                if (!this.currentUser) return;
+
+                db.ref(`products/${this.currentUser.uid}`).on('value', (snapshot) => {
+                    const products = [];
+                    snapshot.forEach((childSnapshot) => {
+                        products.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+                    this.products = products;
+                    this.renderProducts();
+                });
+            }
+
+            async deleteProduct(productId) {
+                if (!this.currentUser) return;
+
+                try {
+                    await db.ref(`products/${this.currentUser.uid}/${productId}`).remove();
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                }
+            }
+
+            async updateProduct(productId, updatedData) {
+                if (!this.currentUser) return;
+
+                try {
+                    await db.ref(`products/${this.currentUser.uid}/${productId}`).update(updatedData);
+                } catch (error) {
+                    console.error('Error updating product:', error);
+                }
+            }
+
+            renderProducts() {
+                const tableBody = document.getElementById('productTableBody');
+                tableBody.innerHTML = '';
+                
+                this.products.forEach(product => {
+                    const formattedPrice = new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                    }).format(product.price);
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${product.name}</td>
+                        <td>${formattedPrice}</td>
+                        <td>${product.priceUnit === 'dozen' ? 'Per Dozen' : 'Per Unit'}</td>
+                        <td>${product.sku}</td>
+                        <td>
+                            <button class="edit-btn">Edit</button>
+                            <button class="delete-product-btn">Delete</button>
+                        </td>
+                    `;
+
+                    const editBtn = tr.querySelector('.edit-btn');
+                    const deleteBtn = tr.querySelector('.delete-product-btn');
+
+                    editBtn.addEventListener('click', () => this.handleEditProduct(product.id));
+                    deleteBtn.addEventListener('click', () => this.handleDeleteProduct(product.id));
+
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            handleEditProduct(productId) {
+                const product = this.products.find(p => p.id === productId);
+                if (!product) return;
+
+                const newName = prompt('Enter new name:', product.name);
+                const newPrice = parseFloat(prompt('Enter new price in Rupiah:', product.price));
+                const newSKU = prompt('Enter new SKU:', product.sku);
+                const newPriceUnit = prompt('Enter price unit (unit/dozen):', product.priceUnit);
+
+                if (newName && !isNaN(newPrice)) {
+                    this.updateProduct(productId, {
+                        name: newName,
+                        price: newPrice,
+                        sku: newSKU || '-',
+                        priceUnit: newPriceUnit === 'dozen' ? 'dozen' : 'unit'
+                    });
+                }
+            }
+
+            handleDeleteProduct(productId) {
+                if (confirm('Are you sure you want to delete this product?')) {
+                    this.deleteProduct(productId);
+                }
+            }
+
             loadTodos() {
                 if (!this.currentUser) return;
     

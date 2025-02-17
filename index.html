@@ -93,15 +93,48 @@
 
         .todos-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .todos-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
         }
 
         .todo-section {
             background-color: var(--card-bg);
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 767px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                width: 100%;
+                padding: 0;
+            }
+
+            .todo-form {
+                padding: 1rem;
+            }
+
+            .todo-item {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
         }
 
         .todo-section h2 {
@@ -191,6 +224,16 @@
             </section>
 
             <section class="todo-section">
+                <h2>Remove Category</h2>
+                <ul class="todo-list" id="rmCategoryList"></ul>
+            </section>
+
+            <section class="todo-section">
+                <h2>Zhonguo List</h2>
+                <ul class="todo-list" id="zhCategoryList"></ul>
+            </section>
+
+            <section class="todo-section">
                 <h2>Main Todo List</h2>
                 <ul class="todo-list" id="mainTodoList"></ul>
             </section>
@@ -200,7 +243,16 @@
 <script type="module">
 
     
-        import { firebaseConfig } from './firebase-config.js';
+const firebaseConfig = {
+    apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
+    authDomain: "mjosmgedb.firebaseapp.com",
+    databaseURL: "https://mjosmgedb-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "mjosmgedb",
+    storageBucket: "mjosmgedb.appspot.com",
+    messagingSenderId: "92899208044",
+    appId: "1:92899208044:web:c765306470956717952149",
+    measurementId: "G-5045ZX790R"
+};
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -212,6 +264,8 @@
                 this.input = document.getElementById('todoInput');
                 this.addCategoryList = document.getElementById('addCategoryList');
                 this.waCategoryList = document.getElementById('waCategoryList');
+                this.rmCategoryList = document.getElementById('rmCategoryList');
+                this.zhCategoryList = document.getElementById('zhCategoryList');
                 this.mainTodoList = document.getElementById('mainTodoList');
                 this.userInfo = document.getElementById('userInfo');
                 this.userEmail = document.getElementById('userEmail');
@@ -325,6 +379,10 @@
                         category = 'add';
                     } else if (text.toLowerCase().includes('wa')) {
                         category = 'wa';
+                    } else if (text.toLowerCase().includes('rm')) {
+                        category = 'rm';
+                    } else if (text.toLowerCase().includes('zh')) {
+                        category = 'zh';
                     }
                     await newTodoRef.set({
                         text,
@@ -386,7 +444,7 @@
                 li.appendChild(checkbox);
                 li.appendChild(span);
     
-                if (todo.category === 'wa') {
+                if (todo.category === 'wa' || todo.category === 'zh') {
                     const shareBtn = document.createElement('button');
                     shareBtn.textContent = 'Share on WhatsApp';
                     shareBtn.className = 'btn';
@@ -406,10 +464,14 @@
             renderTodos() {
                 const addCategoryTodos = this.todos.filter(todo => todo.category === 'add');
                 const waCategoryTodos = this.todos.filter(todo => todo.category === 'wa');
+                const rmCategoryTodos = this.todos.filter(todo => todo.category === 'rm');
+                const zhCategoryTodos = this.todos.filter(todo => todo.category === 'zh');
                 const mainTodos = this.todos.filter(todo => todo.category === 'main');
 
                 this.addCategoryList.innerHTML = '';
                 this.waCategoryList.innerHTML = '';
+                this.rmCategoryList.innerHTML = '';
+                this.zhCategoryList.innerHTML = '';
                 this.mainTodoList.innerHTML = '';
 
                 addCategoryTodos.forEach(todo => {
@@ -418,6 +480,14 @@
 
                 waCategoryTodos.forEach(todo => {
                     this.waCategoryList.appendChild(this.createTodoElement(todo));
+                });
+
+                rmCategoryTodos.forEach(todo => {
+                    this.rmCategoryList.appendChild(this.createTodoElement(todo));
+                });
+
+                zhCategoryTodos.forEach(todo => {
+                    this.zhCategoryList.appendChild(this.createTodoElement(todo));
                 });
 
                 // Add Share All button for WA category
@@ -433,6 +503,21 @@
                         window.open(`https://wa.me/+6282110683255?text=${text}`);
                     });
                     this.waCategoryList.appendChild(shareAllBtn);
+                }
+
+                // Add Share All button for Zhonguo List
+                if (zhCategoryTodos.length > 0) {
+                    const shareAllBtn = document.createElement('button');
+                    shareAllBtn.textContent = 'Share All to WhatsApp';
+                    shareAllBtn.className = 'btn';
+                    shareAllBtn.style.width = '100%';
+                    shareAllBtn.style.marginTop = '1rem';
+                    shareAllBtn.addEventListener('click', () => {
+                        const allTasks = zhCategoryTodos.map(todo => todo.text).join('\n');
+                        const text = encodeURIComponent(allTasks);
+                        window.open(`https://wa.me/+6282110683255?text=${text}`);
+                    });
+                    this.zhCategoryList.appendChild(shareAllBtn);
                 }
 
                 mainTodos.forEach(todo => {

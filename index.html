@@ -213,14 +213,30 @@
                     padding: 1.5rem;
                     border-radius: 8px;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    overflow-x: auto;
                 }
                 .product-form {
                     display: grid;
                     gap: 1rem;
                     margin-bottom: 1.5rem;
                 }
-                .product-form input {
+                .product-form input,
+                .product-form select {
                     width: 100%;
+                    padding: 0.75rem;
+                    font-size: 1rem;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                }
+                .product-search {
+                    margin-bottom: 1rem;
+                    display: flex;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                }
+                .product-search input {
+                    flex: 1;
+                    min-width: 200px;
                     padding: 0.75rem;
                     font-size: 1rem;
                     border: 1px solid #d1d5db;
@@ -313,6 +329,9 @@
 
         <div id="productSection" class="product-section">
             <h2>Product Management</h2>
+            <div class="product-search">
+                <input type="text" id="productSearchInput" placeholder="Search by name or SKU...">
+            </div>
             <form id="productForm" class="product-form">
                 <input type="text" id="productName" placeholder="Product Name" required>
                 <input type="number" id="productPrice" placeholder="Price in Rupiah" required>
@@ -542,7 +561,50 @@ const firebaseConfig = {
 
             setupProductManagement() {
                 const productForm = document.getElementById('productForm');
+                const searchInput = document.getElementById('productSearchInput');
+                
                 productForm.addEventListener('submit', (e) => this.handleProductSubmit(e));
+                
+                searchInput.addEventListener('input', () => {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    const filteredProducts = this.products.filter(product => 
+                        product.name.toLowerCase().includes(searchTerm) ||
+                        product.sku.toLowerCase().includes(searchTerm)
+                    );
+                    this.renderFilteredProducts(filteredProducts);
+                });
+            }
+
+            renderFilteredProducts(products) {
+                const tableBody = document.getElementById('productTableBody');
+                tableBody.innerHTML = '';
+                
+                products.forEach(product => {
+                    const formattedPrice = new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                    }).format(product.price);
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${product.name}</td>
+                        <td>${formattedPrice}</td>
+                        <td>${product.priceUnit === 'dozen' ? 'Per Dozen' : 'Per Unit'}</td>
+                        <td>${product.sku}</td>
+                        <td>
+                            <button class="edit-btn">Edit</button>
+                            <button class="delete-product-btn">Delete</button>
+                        </td>
+                    `;
+
+                    const editBtn = tr.querySelector('.edit-btn');
+                    const deleteBtn = tr.querySelector('.delete-product-btn');
+
+                    editBtn.addEventListener('click', () => this.handleEditProduct(product.id));
+                    deleteBtn.addEventListener('click', () => this.handleDeleteProduct(product.id));
+
+                    tableBody.appendChild(tr);
+                });
             }
 
             async handleProductSubmit(e) {

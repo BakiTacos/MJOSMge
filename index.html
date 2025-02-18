@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Todo List</title>
+    <title>Lakata MGE</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -197,7 +197,7 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>Smart Todo List</h1>
+            <h1>Lakata MGE</h1>
             <nav class="navbar" style="display: none;">
                 <button id="todoNavBtn" class="nav-btn active">Todo List</button>
                 <button id="productNavBtn" class="nav-btn">Product Management</button>
@@ -428,7 +428,7 @@
         </div>
 
         <div id="productSection" class="product-section">
-            <h2>Product Management</h2>
+            <h2>Product</h2>
             <div class="product-categories">
                 <button class="category-btn active" data-category="all">All</button>
                 <button class="category-btn" data-category="teknik">Teknik</button>
@@ -628,12 +628,29 @@ function updateTransactionTable() {
             const transaction = childSnapshot.val();
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${new Date(transaction.date).toLocaleDateString()}</td>
+                <td>
+                    <button class="delete-transaction-btn" data-id="${childSnapshot.key}">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                            
+                            
+                        </svg>
+                    </button>
+                    ${new Date(transaction.date).toLocaleDateString()}
+                </td>
                 <td>${transaction.product}</td>
                 <td>${transaction.quantity}</td>
                 <td>${transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
             `;
+
+            const deleteBtn = row.querySelector('.delete-transaction-btn');
+            deleteBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete this transaction?')) {
+                    firebase.database().ref('transactions').child(childSnapshot.key).remove()
+                        .catch(error => console.error('Error deleting transaction:', error));
+                }
+            });
+
             transactionTableBody.appendChild(row);
         });
     });

@@ -511,33 +511,34 @@
                         </form>
                     </div>
                 </div>
-            </section>
-
-            <section class="settings-card">
-                <h2>Customer Settings</h2>
                 <div class="settings-content">
                     <div class="settings-group">
-                        <h3>Customer Preferences</h3>
+                        <h3>Customer Management</h3>
                         <form id="customerSettingsForm">
+                            <input type="hidden" id="customerId">
                             <div class="form-group">
-                                <label for="defaultPaymentTerms">Default Payment Terms</label>
-                                <select id="defaultPaymentTerms" name="defaultPaymentTerms">
-                                    <option value="immediate">Immediate</option>
-                                    <option value="net15">Net 15</option>
-                                    <option value="net30">Net 30</option>
-                                </select>
+                                <label for="customerName">Customer Name</label>
+                                <input type="text" id="customerName" name="customerName" required>
                             </div>
                             <div class="form-group">
-                                <label for="defaultCurrency">Default Currency</label>
-                                <select id="defaultCurrency" name="defaultCurrency">
-                                    <option value="IDR">IDR</option>
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                </select>
+                                <label for="customerPhone">Phone Number</label>
+                                <input type="tel" id="customerPhone" name="customerPhone">
                             </div>
-                            <button type="submit" class="save-btn">Save Customer Settings</button>
+                            <button type="submit" class="save-btn">Save Customer</button>
                         </form>
                     </div>
+                    <h3>Customer List</h3>
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Name</th>
+                                <th>Phone Number</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody"></tbody>
+                    </table>
                 </div>
             </section>
         </div>
@@ -1393,5 +1394,77 @@ const firebaseConfig = {
         }
     });
 </script>
-</body>
+        <script>
+            // Customer management functions
+            function saveCustomer(event) {
+                event.preventDefault();
+                const customerName = document.getElementById('customerName').value;
+                const customerPhone = document.getElementById('customerPhone').value;
+                const customerId = document.getElementById('customerId').value || Date.now().toString();
+
+                firebase.database().ref('customers/' + customerId).set({
+                    name: customerName,
+                    phone: customerPhone,
+                    id: customerId
+                }).then(() => {
+                    alert('Customer saved successfully!');
+                    document.getElementById('customerSettingsForm').reset();
+                    loadCustomers();
+                }).catch(error => {
+                    console.error('Error saving customer:', error);
+                    alert('Error saving customer');
+                });
+            }
+
+            function loadCustomers() {
+                const tableBody = document.getElementById('customerTableBody');
+                firebase.database().ref('customers').on('value', snapshot => {
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(childSnapshot => {
+                        const customer = childSnapshot.val();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${customer.id}</td>
+                            <td>${customer.name}</td>
+                            <td>${customer.phone || 'N/A'}</td>
+                            <td>
+                                <button onclick="editCustomer('${customer.id}')" class="edit-btn">Edit</button>
+                                <button onclick="deleteCustomer('${customer.id}')" class="delete-product-btn">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+            }
+
+            function editCustomer(customerId) {
+                firebase.database().ref('customers/' + customerId).once('value').then(snapshot => {
+                    const customer = snapshot.val();
+                    document.getElementById('customerName').value = customer.name;
+                    document.getElementById('customerPhone').value = customer.phone || '';
+                    document.getElementById('customerId').value = customer.id;
+                });
+            }
+
+            function deleteCustomer(customerId) {
+                if (confirm('Are you sure you want to delete this customer?')) {
+                    firebase.database().ref('customers/' + customerId).remove()
+                        .then(() => {
+                            alert('Customer deleted successfully!');
+                            loadCustomers();
+                        })
+                        .catch(error => {
+                            console.error('Error deleting customer:', error);
+                            alert('Error deleting customer');
+                        });
+                }
+            }
+
+            // Event listeners
+            document.getElementById('customerSettingsForm').addEventListener('submit', saveCustomer);
+            document.addEventListener('DOMContentLoaded', () => {
+                loadCustomers();
+            });
+        </script>
+    </body>
 </html>

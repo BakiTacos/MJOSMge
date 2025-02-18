@@ -637,9 +637,10 @@
             <option value="">Select a customer...</option>
         </select>
     </div>
-    <div class="product-popup-buttons">
-        <button id="cancelExport" class="btn">Cancel</button>
-        <button id="confirmExport" class="btn" style="background-color: #10b981;">Export</button>
+    <div class="product-popup-buttons" style="flex-direction: column; gap: 0.5rem;">
+        <button id="confirmExportWithCustomer" class="btn" style="background-color: #10b981; width: 100%;">Export with Customer Info</button>
+        <button id="confirmExportSimple" class="btn" style="background-color: #3b82f6; width: 100%;">Export Transaction Only</button>
+        <button id="cancelExport" class="btn" style="width: 100%;">Cancel</button>
     </div>
 </div>
 
@@ -677,7 +678,7 @@ document.getElementById('exportTransactionBtn').addEventListener('click', showEx
 document.getElementById('cancelExport').addEventListener('click', hideExportPopup);
 document.getElementById('quantityPopupOverlay').addEventListener('click', hideExportPopup);
 
-document.getElementById('confirmExport').addEventListener('click', async () => {
+document.getElementById('confirmExportWithCustomer').addEventListener('click', async () => {
     const customerId = document.getElementById('customerSelect').value;
     if (!customerId) {
         alert('Please select a customer');
@@ -696,55 +697,86 @@ document.getElementById('confirmExport').addEventListener('click', async () => {
             transactions.push(childSnapshot.val());
         });
 
-        // Prepare export data
+        // Export with customer info
         const exportData = {
             customer: customer,
-            transactions: transactions,
-            exportDate: new Date().toISOString()
+            transactions: transactions
         };
-
-        // Convert to CSV or desired format
-        const csvContent = generateCSV(exportData);
-
-        // Create download link
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `transactions_${customer.name}_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
+        downloadCSV(exportData, `transactions_${customer.name}_${new Date().toISOString()}.csv`);
         hideExportPopup();
     } catch (error) {
-        console.error('Error exporting transactions:', error);
-        alert('Error exporting transactions. Please try again.');
+        console.error('Error exporting data:', error);
+        alert('Error exporting data');
     }
 });
 
+document.getElementById('confirmExportSimple').addEventListener('click', async () => {
+    try {
+        // Fetch transactions only
+        const transactionSnapshot = await firebase.database().ref('transactions').once('value');
+        const transactions = [];
+        transactionSnapshot.forEach(childSnapshot => {
+            transactions.push(childSnapshot.val());
+        });
+
+        // Export transactions only
+        downloadCSV({ transactions: transactions }, `transactions_${new Date().toISOString()}.csv`);
+        hideExportPopup();
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        alert('Error exporting data');
+    }
+});
+
+function downloadCSV(data, filename) {
+    const csvContent = generateCSV(data);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 function generateCSV(data) {
-    const headers = ['Product', 'Quantity', 'Price', 'Total'];
-    const rows = data.transactions.map(t => [
-        t.product,
-        t.quantity,
-        t.price,
-        t.total
-    ]);
+    const rows = [];
+    
+    // Add customer information if available
+    if (data.customer) {
+        rows.push(['Customer Information']);
+        rows.push(['Customer Name', 'Phone', 'Export Date']);
+        rows.push([data.customer.name, data.customer.phone || 'N/A', new Date().toLocaleDateString('en-GB')]);
+        rows.push([]); // Empty row for spacing
+    }
 
-    const customerInfo = [
-        ['Customer Information'],
-        ['Name', data.customer.name],
-        ['Phone', data.customer.phone || 'N/A'],
-        [''],
-        ['Transaction Details']
-    ];
+    // Add headers and data based on export type
+    if (data.customer) {
+        // If customer info is included, keep the transaction information header
+        rows.push(['Transaction Information']);
+        rows.push(['Product', 'Quantity', 'Price', 'Total']);
+    } else {
+        // For simple export, only include column headers
+        rows.push(['Product', 'Quantity', 'Price', 'Total']);
+    }
 
-    return [...customerInfo, headers, ...rows]
-        .map(row => row.join(','))
-        .join('\n');
+    // Add transaction data
+    data.transactions.forEach(t => {
+        rows.push([t.product, t.quantity, t.price, (t.quantity * t.price)]);
+    });
 
+    // Convert to CSV format with proper escaping
+    return rows.map(row => 
+        row.map(cell => {
+            const cellStr = String(cell);
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+        }).join(',')
+    ).join('\n');
 }
 </script>
 

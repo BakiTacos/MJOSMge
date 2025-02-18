@@ -438,25 +438,14 @@
                 </thead>
                 <tbody id="productTableBody"></tbody>
             </table>
+        </div>
         <div id="transactionSection" class="product-section" style="display: none;">
-            <h2>Transaction Management</h2>
-            <form id="transactionForm" class="product-form">
-                <input type="text" id="transactionProduct" placeholder="Product Name" required>
-                <input type="number" id="transactionQuantity" placeholder="Quantity" required>
-                <input type="number" id="transactionPrice" placeholder="Price per Unit" required>
-                <select id="transactionType" class="product-form-select" required>
-                    <option value="">Select Transaction Type</option>
-                    <option value="sale">Sale</option>
-                    <option value="purchase">Purchase</option>
-                </select>
-                <button type="submit" class="btn">Add Transaction</button>
-            </form>
+            <h2>Transaction</h2>
             <table class="product-table">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Product</th>
-                        <th>Type</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>

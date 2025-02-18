@@ -87,8 +87,23 @@
             transition: background-color 0.3s;
         }
 
-        .btn:hover {
+        .btn:hover,
+        .delete-btn:hover,
+        .category-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary:hover {
             background-color: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .todos-container {
@@ -208,6 +223,15 @@
                     background-color: var(--primary-color);
                     color: white;
                 }
+                .nav-btn:hover {
+                    background-color: #d1d5db;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .nav-btn.active:hover {
+                    background-color: var(--primary-color);
+                    opacity: 0.9;
+                }
                 .product-section {
                     display: none;
                     background-color: var(--card-bg);
@@ -295,6 +319,16 @@
                 .delete-product-btn {
                     background-color: #ef4444;
                     color: white;
+                }
+                .edit-btn:hover, .delete-product-btn:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .edit-btn:hover {
+                    background-color: #2563eb;
+                }
+                .delete-product-btn:hover {
+                    background-color: #dc2626;
                 }
             </style>
             <div id="authStatus" style="margin-top: 1rem;">

@@ -337,6 +337,39 @@
                 .add-to-transaction-btn:hover {
                     background-color: #059669;
                 }
+                .product-popup {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: white;
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
+                }
+                .product-popup input {
+                    width: 100%;
+                    padding: 0.75rem;
+                    font-size: 1rem;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                    margin-bottom: 1rem;
+                }
+                .product-popup-buttons {
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: flex-end;
+                }
+                .product-popup-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    z-index: 999;
+                }
             </style>
             <div id="authStatus" style="margin-top: 1rem;">
                 <div id="authForms">
@@ -454,11 +487,110 @@
                 <tbody id="transactionTableBody"></tbody>
             </table>
         </div>
+<div id="quantityPopup" class="product-popup" style="display: none;">
+    <h3>Enter Quantity</h3>
+    <input type="number" id="productQuantity" min="1" placeholder="Enter quantity">
+    <div class="product-popup-buttons">
+        <button id="cancelQuantity" class="btn">Cancel</button>
+        <button id="confirmQuantity" class="btn">Confirm</button>
     </div>
+</div>
+<div id="quantityPopupOverlay" class="product-popup-overlay" style="display: none;"></div>
 
 <script type="module">
 
+let selectedProduct = null;
+
+function showQuantityPopup(product) {
+    selectedProduct = product;
+    document.getElementById('quantityPopup').style.display = 'block';
+    document.getElementById('quantityPopupOverlay').style.display = 'block';
+    document.getElementById('productQuantity').value = '1';
+    document.getElementById('productQuantity').focus();
+}
+
+function hideQuantityPopup() {
+    document.getElementById('quantityPopup').style.display = 'none';
+    document.getElementById('quantityPopupOverlay').style.display = 'none';
+    selectedProduct = null;
+}
+
+document.getElementById('cancelQuantity').addEventListener('click', hideQuantityPopup);
+document.getElementById('quantityPopupOverlay').addEventListener('click', hideQuantityPopup);
+
+document.getElementById('confirmQuantity').addEventListener('click', () => {
+    const quantity = parseInt(document.getElementById('productQuantity').value);
+    if (quantity > 0 && selectedProduct) {
+        const transaction = {
+            date: new Date().toISOString(),
+            product: selectedProduct.name,
+            quantity: quantity,
+            price: selectedProduct.sellingPrice || selectedProduct.price,
+            total: quantity * (selectedProduct.sellingPrice || selectedProduct.price)
+        };
+        
+        const transactionRef = firebase.database().ref('transactions');
+        transactionRef.push(transaction)
+            .then(() => {
+                hideQuantityPopup();
+                updateTransactionTable();
+            })
+            .catch(error => console.error('Error adding transaction:', error));
+    }
+});
+
+function updateProductTable() {
+    const productTableBody = document.getElementById('productTableBody');
+    const productRef = firebase.database().ref('products');
     
+    productRef.on('value', snapshot => {
+        productTableBody.innerHTML = '';
+        snapshot.forEach(childSnapshot => {
+            const product = childSnapshot.val();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.name}</td>
+                <td>${product.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
+                <td>${product.sellingPrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
+                <td>${product.unit}</td>
+                <td>${product.category}</td>
+                <td>${product.sku || '-'}</td>
+                <td>
+                    <button class="edit-btn">Edit</button>
+                    <button class="delete-product-btn">Delete</button>
+                    <button class="add-to-transaction-btn">Add to Transaction</button>
+                </td>
+            `;
+            
+            const addToTransactionBtn = row.querySelector('.add-to-transaction-btn');
+            addToTransactionBtn.addEventListener('click', () => showQuantityPopup(product));
+            
+            productTableBody.appendChild(row);
+        });
+    });
+}
+
+function updateTransactionTable() {
+    const transactionTableBody = document.getElementById('transactionTableBody');
+    const transactionRef = firebase.database().ref('transactions');
+    
+    transactionRef.on('value', snapshot => {
+        transactionTableBody.innerHTML = '';
+        snapshot.forEach(childSnapshot => {
+            const transaction = childSnapshot.val();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${new Date(transaction.date).toLocaleDateString()}</td>
+                <td>${transaction.product}</td>
+                <td>${transaction.quantity}</td>
+                <td>${transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
+                <td>${transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
+            `;
+            transactionTableBody.appendChild(row);
+        });
+    });
+}
+        
 const firebaseConfig = {
     apiKey: "AIzaSyBvtvkgzoNWT2gVGl3zLETYPnhKUP-dGc8",
     authDomain: "mjosmgedb.firebaseapp.com",
@@ -740,9 +872,11 @@ const firebaseConfig = {
 
                     const editBtn = tr.querySelector('.edit-btn');
                     const deleteBtn = tr.querySelector('.delete-product-btn');
+                    const addToTransactionBtn = tr.querySelector('.add-to-transaction-btn');
 
                     editBtn.addEventListener('click', () => this.handleEditProduct(product.id));
                     deleteBtn.addEventListener('click', () => this.handleDeleteProduct(product.id));
+                    addToTransactionBtn.addEventListener('click', () => showQuantityPopup(product));
 
                     tableBody.appendChild(tr);
                 });
@@ -843,9 +977,11 @@ const firebaseConfig = {
 
                     const editBtn = tr.querySelector('.edit-btn');
                     const deleteBtn = tr.querySelector('.delete-product-btn');
+                    const addToTransactionBtn = tr.querySelector('.add-to-transaction-btn');
 
                     editBtn.addEventListener('click', () => this.handleEditProduct(product.id));
                     deleteBtn.addEventListener('click', () => this.handleDeleteProduct(product.id));
+                    addToTransactionBtn.addEventListener('click', () => showQuantityPopup(product));
 
                     tableBody.appendChild(tr);
                 });

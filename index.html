@@ -186,6 +186,7 @@
             <nav class="navbar" style="display: none;">
                 <button id="todoNavBtn" class="nav-btn active">Todo List</button>
                 <button id="productNavBtn" class="nav-btn">Product Management</button>
+                <button id="transactionNavBtn" class="nav-btn">Transaction</button>
             </nav>
             <style>
                 .navbar {
@@ -396,6 +397,32 @@
                 </thead>
                 <tbody id="productTableBody"></tbody>
             </table>
+        <div id="transactionSection" class="product-section" style="display: none;">
+            <h2>Transaction Management</h2>
+            <form id="transactionForm" class="product-form">
+                <input type="text" id="transactionProduct" placeholder="Product Name" required>
+                <input type="number" id="transactionQuantity" placeholder="Quantity" required>
+                <input type="number" id="transactionPrice" placeholder="Price per Unit" required>
+                <select id="transactionType" class="product-form-select" required>
+                    <option value="">Select Transaction Type</option>
+                    <option value="sale">Sale</option>
+                    <option value="purchase">Purchase</option>
+                </select>
+                <button type="submit" class="btn">Add Transaction</button>
+            </form>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionTableBody"></tbody>
+            </table>
         </div>
     </div>
 
@@ -583,21 +610,42 @@ const firebaseConfig = {
             setupNavigation() {
                 const todoNavBtn = document.getElementById('todoNavBtn');
                 const productNavBtn = document.getElementById('productNavBtn');
+                const transactionNavBtn = document.getElementById('transactionNavBtn');
+                const todoForm = document.getElementById('todoForm');
                 const todosContainer = document.getElementById('todosContainer');
                 const productSection = document.getElementById('productSection');
+                const transactionSection = document.getElementById('transactionSection');
+                const navbar = document.querySelector('.navbar');
+
+                const setActiveButton = (activeBtn) => {
+                    [todoNavBtn, productNavBtn, transactionNavBtn].forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    activeBtn.classList.add('active');
+                };
 
                 todoNavBtn.addEventListener('click', () => {
-                    todoNavBtn.classList.add('active');
-                    productNavBtn.classList.remove('active');
-                    productSection.style.display = 'none';
+                    setActiveButton(todoNavBtn);
+                    todoForm.style.display = 'block';
                     todosContainer.style.display = 'grid';
+                    productSection.style.display = 'none';
+                    transactionSection.style.display = 'none';
                 });
 
                 productNavBtn.addEventListener('click', () => {
-                    productNavBtn.classList.add('active');
-                    todoNavBtn.classList.remove('active');
+                    setActiveButton(productNavBtn);
+                    todoForm.style.display = 'none';
                     todosContainer.style.display = 'none';
                     productSection.style.display = 'block';
+                    transactionSection.style.display = 'none';
+                });
+
+                transactionNavBtn.addEventListener('click', () => {
+                    setActiveButton(transactionNavBtn);
+                    todoForm.style.display = 'none';
+                    todosContainer.style.display = 'none';
+                    productSection.style.display = 'none';
+                    transactionSection.style.display = 'block';
                 });
             }
 

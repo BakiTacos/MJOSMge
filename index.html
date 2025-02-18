@@ -305,7 +305,7 @@
                 .product-table th {
                     background-color: #f9fafb;
                 }
-                .edit-btn, .delete-product-btn {
+                .edit-btn, .delete-product-btn, .add-to-transaction-btn {
                     padding: 0.25rem 0.5rem;
                     border: none;
                     border-radius: 4px;
@@ -320,7 +320,7 @@
                     background-color: #ef4444;
                     color: white;
                 }
-                .edit-btn:hover, .delete-product-btn:hover {
+                .edit-btn:hover, .delete-product-btn:hover, .add-to-transaction-btn:hover {
                     transform: translateY(-1px);
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }
@@ -329,6 +329,13 @@
                 }
                 .delete-product-btn:hover {
                     background-color: #dc2626;
+                }
+                .add-to-transaction-btn {
+                    background-color: #10b981;
+                    color: white;
+                }
+                .add-to-transaction-btn:hover {
+                    background-color: #059669;
                 }
             </style>
             <div id="authStatus" style="margin-top: 1rem;">
@@ -738,6 +745,7 @@ const firebaseConfig = {
                         <td>
                             <button class="edit-btn">Edit</button>
                             <button class="delete-product-btn">Delete</button>
+                            <button class="add-to-transaction-btn">Add To Transaction</button>
                         </td>
                     `;
 
@@ -840,6 +848,7 @@ const firebaseConfig = {
                         <td>
                             <button class="edit-btn">Edit</button>
                             <button class="delete-product-btn">Delete</button>
+                            <button class="add-to-transaction-btn">Add To Transaction</button>
                         </td>
                     `;
 

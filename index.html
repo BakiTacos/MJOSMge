@@ -589,7 +589,10 @@
             </table>
         </div>
         <div id="transactionSection" class="product-section" style="display: none;">
-            <h2>Transaction</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Transaction</h2>
+                <button id="exportTransactionBtn" class="btn" style="background-color: #10b981;">Export</button>
+            </div>
             <table class="product-table">
                 <thead>
                     <tr>
@@ -625,6 +628,125 @@
     </div>
 </div>
 <div id="quantityPopupOverlay" class="product-popup-overlay" style="display: none;"></div>
+
+<div id="exportPopup" class="product-popup" style="display: none;">
+    <h3>Export Transactions</h3>
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="customerSelect">Select Customer</label>
+        <select id="customerSelect" style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: 4px;">
+            <option value="">Select a customer...</option>
+        </select>
+    </div>
+    <div class="product-popup-buttons">
+        <button id="cancelExport" class="btn">Cancel</button>
+        <button id="confirmExport" class="btn" style="background-color: #10b981;">Export</button>
+    </div>
+</div>
+
+<script>
+function showExportPopup() {
+    const exportPopup = document.getElementById('exportPopup');
+    const overlay = document.getElementById('quantityPopupOverlay');
+    const customerSelect = document.getElementById('customerSelect');
+
+    // Clear previous options
+    customerSelect.innerHTML = '<option value="">Select a customer...</option>';
+
+    // Fetch customers from Firebase
+    firebase.database().ref('customers').once('value')
+        .then(snapshot => {
+            snapshot.forEach(childSnapshot => {
+                const customer = childSnapshot.val();
+                const option = document.createElement('option');
+                option.value = childSnapshot.key;
+                option.textContent = customer.name;
+                customerSelect.appendChild(option);
+            });
+        });
+
+    exportPopup.style.display = 'block';
+    overlay.style.display = 'block';
+}
+
+function hideExportPopup() {
+    document.getElementById('exportPopup').style.display = 'none';
+    document.getElementById('quantityPopupOverlay').style.display = 'none';
+}
+
+document.getElementById('exportTransactionBtn').addEventListener('click', showExportPopup);
+document.getElementById('cancelExport').addEventListener('click', hideExportPopup);
+document.getElementById('quantityPopupOverlay').addEventListener('click', hideExportPopup);
+
+document.getElementById('confirmExport').addEventListener('click', async () => {
+    const customerId = document.getElementById('customerSelect').value;
+    if (!customerId) {
+        alert('Please select a customer');
+        return;
+    }
+
+    try {
+        // Fetch customer details
+        const customerSnapshot = await firebase.database().ref('customers').child(customerId).once('value');
+        const customer = customerSnapshot.val();
+
+        // Fetch transactions
+        const transactionSnapshot = await firebase.database().ref('transactions').once('value');
+        const transactions = [];
+        transactionSnapshot.forEach(childSnapshot => {
+            transactions.push(childSnapshot.val());
+        });
+
+        // Prepare export data
+        const exportData = {
+            customer: customer,
+            transactions: transactions,
+            exportDate: new Date().toISOString()
+        };
+
+        // Convert to CSV or desired format
+        const csvContent = generateCSV(exportData);
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${customer.name}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        hideExportPopup();
+    } catch (error) {
+        console.error('Error exporting transactions:', error);
+        alert('Error exporting transactions. Please try again.');
+    }
+});
+
+function generateCSV(data) {
+    const headers = ['Date', 'Product', 'Quantity', 'Price', 'Total'];
+    const rows = data.transactions.map(t => [
+        new Date(t.date).toLocaleDateString(),
+        t.product,
+        t.quantity,
+        t.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
+        t.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+    ]);
+
+    const customerInfo = [
+        ['Customer Information'],
+        ['Name', data.customer.name],
+        ['Phone', data.customer.phone || 'N/A'],
+        [''],
+        ['Transaction Details']
+    ];
+
+    return [...customerInfo, headers, ...rows]
+        .map(row => row.join(','))
+        .join('\n');
+}
+</script>
 
 <script type="module">
 

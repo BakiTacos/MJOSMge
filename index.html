@@ -490,6 +490,19 @@
 <div id="quantityPopup" class="product-popup" style="display: none;">
     <h3>Enter Quantity</h3>
     <input type="number" id="productQuantity" min="1" placeholder="Enter quantity">
+    <div class="price-selection" style="margin: 1rem 0;">
+        <h4 style="margin-bottom: 0.5rem;">Select Price Type:</h4>
+        <div style="display: flex; gap: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="radio" name="priceType" value="selling" checked>
+                Selling Price
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="radio" name="priceType" value="purchase">
+                Purchase Price
+            </label>
+        </div>
+    </div>
     <div class="product-popup-buttons">
         <button id="cancelQuantity" class="btn">Cancel</button>
         <button id="confirmQuantity" class="btn">Confirm</button>
@@ -520,13 +533,15 @@ document.getElementById('quantityPopupOverlay').addEventListener('click', hideQu
 
 document.getElementById('confirmQuantity').addEventListener('click', () => {
     const quantity = parseInt(document.getElementById('productQuantity').value);
+    const priceType = document.querySelector('input[name="priceType"]:checked').value;
     if (quantity > 0 && selectedProduct) {
+        const price = priceType === 'selling' ? (selectedProduct.sellingPrice || selectedProduct.price) : selectedProduct.price;
         const transaction = {
             date: new Date().toISOString(),
             product: selectedProduct.name,
             quantity: quantity,
-            price: selectedProduct.sellingPrice || selectedProduct.price,
-            total: quantity * (selectedProduct.sellingPrice || selectedProduct.price)
+            price: price,
+            total: quantity * price
         };
         
         const transactionRef = firebase.database().ref('transactions');
@@ -570,10 +585,43 @@ function updateProductTable() {
     });
 }
 
+// Initialize transaction table when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    updateTransactionTable();
+});
+
 function updateTransactionTable() {
     const transactionTableBody = document.getElementById('transactionTableBody');
     const transactionRef = firebase.database().ref('transactions');
     
+    // Remove existing Delete All button if it exists
+    const existingDeleteBtn = document.querySelector('#deleteAllTransactionsBtn');
+    if (existingDeleteBtn) {
+        existingDeleteBtn.remove();
+    }
+    
+    // Create new Delete All button
+    const deleteAllBtn = document.createElement('button');
+    deleteAllBtn.textContent = 'Delete All';
+    deleteAllBtn.id = 'deleteAllTransactionsBtn';
+    deleteAllBtn.className = 'btn';
+    deleteAllBtn.style.width = '100%';
+    deleteAllBtn.style.marginTop = '1rem';
+    deleteAllBtn.style.backgroundColor = '#ef4444';
+    deleteAllBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete all transactions?')) {
+            await firebase.database().ref('transactions').remove();
+        }
+    });
+    
+    // Add the button after the table
+    const transactionSection = document.getElementById('transactionSection');
+    transactionSection.appendChild(deleteAllBtn);
+    
+    // Remove existing listener if any
+    transactionRef.off('value');
+    
+    // Add new listener
     transactionRef.on('value', snapshot => {
         transactionTableBody.innerHTML = '';
         snapshot.forEach(childSnapshot => {

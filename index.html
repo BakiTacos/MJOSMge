@@ -725,13 +725,12 @@ document.getElementById('confirmExport').addEventListener('click', async () => {
 });
 
 function generateCSV(data) {
-    const headers = ['Date', 'Product', 'Quantity', 'Price', 'Total'];
+    const headers = ['Product', 'Quantity', 'Price', 'Total'];
     const rows = data.transactions.map(t => [
-        new Date(t.date).toLocaleDateString(),
         t.product,
         t.quantity,
-        t.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
-        t.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+        t.price,
+        t.total
     ]);
 
     const customerInfo = [
@@ -745,6 +744,7 @@ function generateCSV(data) {
     return [...customerInfo, headers, ...rows]
         .map(row => row.join(','))
         .join('\n');
+
 }
 </script>
 

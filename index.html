@@ -7,6 +7,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -640,6 +642,7 @@
     <div class="product-popup-buttons" style="flex-direction: column; gap: 0.5rem;">
         <button id="confirmExportWithCustomer" class="btn" style="background-color: #10b981; width: 100%;">Export with Customer Info</button>
         <button id="confirmExportSimple" class="btn" style="background-color: #3b82f6; width: 100%;">Export Transaction Only</button>
+        <button id="confirmExportPDF" class="btn" style="background-color: #8b5cf6; width: 100%;">Export as PDF Invoice</button>
         <button id="cancelExport" class="btn" style="width: 100%;">Cancel</button>
     </div>
 </div>
@@ -728,6 +731,79 @@ document.getElementById('confirmExportSimple').addEventListener('click', async (
     }
 });
 
+document.getElementById('confirmExportPDF').addEventListener('click', async function() {
+    const customerId = document.getElementById('customerSelect').value;
+    if (!customerId && !confirm('Do you want to proceed without customer information?')) {
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Add business name at the top
+    const businessName = document.getElementById('companyName').value || 'Business Name';
+    doc.setFontSize(18);
+    doc.text(businessName, pageWidth / 2, 20, { align: 'center' });
+    
+    // Add invoice details
+    doc.setFontSize(12);
+    const today = new Date().toLocaleDateString();
+    const invoiceNumber = Date.now(); // Simple incrementing number based on timestamp
+    
+    let yPosition = 40;
+    
+    if (customerId) {
+        const customerRef = firebase.database().ref('customers/' + customerId);
+        const snapshot = await customerRef.once('value');
+        const customer = snapshot.val();
+        doc.text(`Customer: ${customer.name}`, 20, yPosition);
+        doc.text(`Phone: ${customer.phone || 'N/A'}`, 20, yPosition + 10);
+        yPosition += 20;
+    }
+    
+    doc.text(`Invoice #: ${invoiceNumber}`, 20, yPosition);
+    doc.text(`Date: ${today}`, 20, yPosition + 10);
+    
+    // Add transaction items
+    const transactionRef = firebase.database().ref('transactions');
+    const transactionSnapshot = await transactionRef.once('value');
+    const transactions = [];
+    transactionSnapshot.forEach(childSnapshot => {
+        transactions.push(childSnapshot.val());
+    });
+    
+    const tableData = transactions.map(transaction => [
+        transaction.product,
+        transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
+        transaction.quantity,
+        transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+    ]);
+    
+    doc.autoTable({
+        head: [["Product", "Price", "Quantity", "Total"]],
+        body: tableData,
+        startY: yPosition + 20,
+        theme: 'grid'
+    });
+    
+    // Calculate and add total
+    const total = transactions.reduce((sum, transaction) => sum + transaction.total, 0);
+    const finalY = doc.previousAutoTable.finalY + 10;
+    doc.text(`Total: ${total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}`, pageWidth - 30, finalY, { align: 'right' });
+    
+    // Add signature line
+    doc.line(20, finalY + 30, 80, finalY + 30);
+    doc.text('Shop Signature', 20, finalY + 35);
+    
+    // Save the PDF
+    doc.save(`invoice-${invoiceNumber}.pdf`);
+    
+    // Close the popup
+    document.getElementById('exportPopup').style.display = 'none';
+    document.querySelector('.product-popup-overlay').style.display = 'none';
+});
+
 function downloadCSV(data, filename) {
     const csvContent = generateCSV(data);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -756,15 +832,15 @@ function generateCSV(data) {
     if (data.customer) {
         // If customer info is included, keep the transaction information header
         rows.push(['Transaction Information']);
-        rows.push(['Product', 'Quantity', 'Price', 'Total']);
+        rows.push(['Product', 'Price', 'Quantity', 'Total']);
     } else {
         // For simple export, only include column headers
-        rows.push(['Product', 'Quantity', 'Price', 'Total']);
+        rows.push(['Product', 'Price', 'Quantity', 'Total']);
     }
 
     // Add transaction data
     data.transactions.forEach(t => {
-        rows.push([t.product, t.quantity, t.price, (t.quantity * t.price)]);
+        rows.push([t.product, t.price, t.quantity, (t.quantity * t.price)]);
     });
 
     // Convert to CSV format with proper escaping

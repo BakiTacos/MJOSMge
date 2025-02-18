@@ -215,6 +215,31 @@
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                     overflow-x: auto;
                 }
+                .product-categories {
+                    margin: 1rem 0;
+                    display: flex;
+                    justify-content: center;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                }
+                .category-btn {
+                    padding: 0.5rem 1rem;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    background-color: #e5e7eb;
+                    color: var(--text-color);
+                    transition: all 0.3s;
+                    font-size: 1rem;
+                }
+                .category-btn.active {
+                    background-color: var(--primary-color);
+                    color: white;
+                }
+                .category-btn:hover {
+                    background-color: var(--secondary-color);
+                    color: white;
+                }
                 .product-form {
                     display: grid;
                     gap: 1rem;
@@ -329,15 +354,30 @@
 
         <div id="productSection" class="product-section">
             <h2>Product Management</h2>
+            <div class="product-categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="teknik">Teknik</button>
+                <button class="category-btn" data-category="baut">Baut</button>
+                <button class="category-btn" data-category="zhongguo">Zhongguo</button>
+                <button class="category-btn" data-category="plastik">Plastik</button>
+            </div>
             <div class="product-search">
                 <input type="text" id="productSearchInput" placeholder="Search by name or SKU...">
             </div>
             <form id="productForm" class="product-form">
                 <input type="text" id="productName" placeholder="Product Name" required>
-                <input type="number" id="productPrice" placeholder="Price in Rupiah" required>
+                <input type="number" id="productPrice" placeholder="Purchase Price in Rupiah" required>
+                <input type="number" id="productSellingPrice" placeholder="Selling Price in Rupiah" required>
                 <select id="priceUnit" class="product-form-select">
                     <option value="unit">Per Unit</option>
                     <option value="dozen">Per Dozen</option>
+                </select>
+                <select id="productCategory" class="product-form-select" required>
+                    <option value="">Select Category</option>
+                    <option value="teknik">Teknik</option>
+                    <option value="baut">Baut</option>
+                    <option value="zhongguo">Zhongguo</option>
+                    <option value="plastik">Plastik</option>
                 </select>
                 <input type="text" id="productSKU" placeholder="Product Code (SKU)">
                 <button type="submit" class="btn">Add Product</button>
@@ -346,8 +386,10 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Price</th>
+                        <th>Purchase Price</th>
+                        <th>Selling Price</th>
                         <th>Unit</th>
+                        <th>Category</th>
                         <th>SKU</th>
                         <th>Actions</th>
                     </tr>
@@ -562,6 +604,7 @@ const firebaseConfig = {
             setupProductManagement() {
                 const productForm = document.getElementById('productForm');
                 const searchInput = document.getElementById('productSearchInput');
+                const categoryButtons = document.querySelectorAll('.category-btn');
                 
                 productForm.addEventListener('submit', (e) => this.handleProductSubmit(e));
                 
@@ -572,6 +615,18 @@ const firebaseConfig = {
                         product.sku.toLowerCase().includes(searchTerm)
                     );
                     this.renderFilteredProducts(filteredProducts);
+                });
+
+                categoryButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        categoryButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        const category = button.dataset.category;
+                        const filteredProducts = category === 'all' ? 
+                            this.products : 
+                            this.products.filter(product => product.category === category);
+                        this.renderFilteredProducts(filteredProducts);
+                    });
                 });
             }
 
@@ -584,12 +639,19 @@ const firebaseConfig = {
                         style: 'currency',
                         currency: 'IDR'
                     }).format(product.price);
+
+                    const formattedSellingPrice = new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                    }).format(product.sellingPrice || product.price);
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${product.name}</td>
                         <td>${formattedPrice}</td>
+                        <td>${formattedSellingPrice}</td>
                         <td>${product.priceUnit === 'dozen' ? 'Per Dozen' : 'Per Unit'}</td>
+                        <td>${product.category || 'Uncategorized'}</td>
                         <td>${product.sku}</td>
                         <td>
                             <button class="edit-btn">Edit</button>
@@ -612,17 +674,22 @@ const firebaseConfig = {
                 try {
                     const name = document.getElementById('productName').value.trim();
                     const price = parseFloat(document.getElementById('productPrice').value);
+                    const sellingPrice = parseFloat(document.getElementById('productSellingPrice').value);
                     const sku = document.getElementById('productSKU').value.trim() || '-';
                     const priceUnit = document.getElementById('priceUnit').value;
+                    const category = document.getElementById('productCategory').value;
 
                     const newProductRef = db.ref(`products/${this.currentUser.uid}`).push();
                     await newProductRef.set({
                         name,
                         price,
+                        sellingPrice,
                         sku,
                         priceUnit,
+                        category,
                         createdAt: Date.now()
                     });
+
                     productForm.reset();
                 } catch (error) {
                     console.error('Error adding product:', error);
@@ -674,12 +741,19 @@ const firebaseConfig = {
                         style: 'currency',
                         currency: 'IDR'
                     }).format(product.price);
+
+                    const formattedSellingPrice = new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                    }).format(product.sellingPrice || product.price);
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${product.name}</td>
                         <td>${formattedPrice}</td>
+                        <td>${formattedSellingPrice}</td>
                         <td>${product.priceUnit === 'dozen' ? 'Per Dozen' : 'Per Unit'}</td>
+                        <td>${product.category || 'Uncategorized'}</td>
                         <td>${product.sku}</td>
                         <td>
                             <button class="edit-btn">Edit</button>
@@ -703,16 +777,19 @@ const firebaseConfig = {
 
                 const newName = prompt('Enter new name:', product.name);
                 const newPrice = parseFloat(prompt('Enter new price in Rupiah:', product.price));
+                const newSellingPrice = parseFloat(prompt('Enter new selling price in Rupiah:', product.sellingPrice || product.price));
                 const newSKU = prompt('Enter new SKU:', product.sku);
                 const newPriceUnit = prompt('Enter price unit (unit/dozen):', product.priceUnit);
 
-                if (newName && !isNaN(newPrice)) {
+                if (newName && !isNaN(newPrice) && !isNaN(newSellingPrice)) {
                     this.updateProduct(productId, {
                         name: newName,
                         price: newPrice,
+                        sellingPrice: newSellingPrice,
                         sku: newSKU || '-',
                         priceUnit: newPriceUnit === 'dozen' ? 'dozen' : 'unit'
                     });
+
                 }
             }
 

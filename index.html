@@ -202,6 +202,7 @@
                 <button id="todoNavBtn" class="nav-btn active">Todo List</button>
                 <button id="productNavBtn" class="nav-btn">Product Management</button>
                 <button id="transactionNavBtn" class="nav-btn">Transaction</button>
+                <button id="settingsNavBtn" class="nav-btn">Settings</button>
             </nav>
             <style>
                 .navbar {
@@ -223,7 +224,7 @@
                     background-color: var(--primary-color);
                     color: white;
                 }
-                .nav-btn:hover {
+                .nav-btn:hover:not(.active) {
                     background-color: #d1d5db;
                     transform: translateY(-1px);
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -231,6 +232,66 @@
                 .nav-btn.active:hover {
                     background-color: var(--primary-color);
                     opacity: 0.9;
+                }
+                .settings-section {
+                    display: none;
+                    padding: 1.5rem;
+                    gap: 1.5rem;
+                }
+                .settings-card {
+                    background-color: var(--card-bg);
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
+                }
+                .settings-content {
+                    margin-top: 1rem;
+                }
+                .settings-group {
+                    margin-bottom: 1.5rem;
+                }
+                .settings-group h3 {
+                    color: var(--text-color);
+                    font-size: 1.1rem;
+                    margin-bottom: 1rem;
+                }
+                .form-group {
+                    margin-bottom: 1rem;
+                }
+                .form-group label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    color: var(--text-color);
+                }
+                .form-group input,
+                .form-group select,
+                .form-group textarea {
+                    width: 100%;
+                    padding: 0.5rem;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 4px;
+                    background-color: var(--input-bg);
+                    color: var(--text-color);
+                    font-size: 1rem;
+                    transition: border-color 0.3s, box-shadow 0.3s;
+                }
+                .form-group textarea {
+                    resize: vertical;
+                    min-height: 100px;
+                }
+                .save-btn {
+                    background-color: var(--primary-color);
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .save-btn:hover {
+                    opacity: 0.9;
+                    transform: translateY(-1px);
                 }
                 .product-section {
                     display: none;
@@ -424,6 +485,60 @@
             <section class="todo-section">
                 <h2>Main Todo List</h2>
                 <ul class="todo-list" id="mainTodoList"></ul>
+            </section>
+        </div>
+
+        <div id="settingsSection" class="settings-section" style="display: none;">
+            <section class="settings-card">
+                <h2>Business Settings</h2>
+                <div class="settings-content">
+                    <div class="settings-group">
+                        <h3>Company Information</h3>
+                        <form id="businessSettingsForm">
+                            <div class="form-group">
+                                <label for="companyName">Company Name</label>
+                                <input type="text" id="companyName" name="companyName">
+                            </div>
+                            <div class="form-group">
+                                <label for="businessAddress">Business Address</label>
+                                <textarea id="businessAddress" name="businessAddress"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="taxId">Tax ID</label>
+                                <input type="text" id="taxId" name="taxId">
+                            </div>
+                            <button type="submit" class="save-btn">Save Business Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <h2>Customer Settings</h2>
+                <div class="settings-content">
+                    <div class="settings-group">
+                        <h3>Customer Preferences</h3>
+                        <form id="customerSettingsForm">
+                            <div class="form-group">
+                                <label for="defaultPaymentTerms">Default Payment Terms</label>
+                                <select id="defaultPaymentTerms" name="defaultPaymentTerms">
+                                    <option value="immediate">Immediate</option>
+                                    <option value="net15">Net 15</option>
+                                    <option value="net30">Net 30</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="defaultCurrency">Default Currency</label>
+                                <select id="defaultCurrency" name="defaultCurrency">
+                                    <option value="IDR">IDR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="save-btn">Save Customer Settings</button>
+                        </form>
+                    </div>
+                </div>
             </section>
         </div>
 
@@ -838,42 +953,32 @@ const firebaseConfig = {
                 const todoNavBtn = document.getElementById('todoNavBtn');
                 const productNavBtn = document.getElementById('productNavBtn');
                 const transactionNavBtn = document.getElementById('transactionNavBtn');
-                const todoForm = document.getElementById('todoForm');
-                const todosContainer = document.getElementById('todosContainer');
-                const productSection = document.getElementById('productSection');
+                const settingsNavBtn = document.getElementById('settingsNavBtn');
+
+                const todoSection = document.getElementById('todosContainer');
+                const productSection = document.querySelector('.product-section');
                 const transactionSection = document.getElementById('transactionSection');
-                const navbar = document.querySelector('.navbar');
+                const settingsSection = document.getElementById('settingsSection');
 
-                const setActiveButton = (activeBtn) => {
-                    [todoNavBtn, productNavBtn, transactionNavBtn].forEach(btn => {
-                        btn.classList.remove('active');
+                const sections = [todoSection, productSection, transactionSection, settingsSection];
+                const navButtons = [todoNavBtn, productNavBtn, transactionNavBtn, settingsNavBtn];
+
+                function showSection(activeSection, activeButton) {
+                    sections.forEach(section => {
+                        if (section) section.style.display = section === activeSection ? 'block' : 'none';
                     });
-                    activeBtn.classList.add('active');
-                };
+                    navButtons.forEach(button => button.classList.remove('active'));
+                    activeButton.classList.add('active');
+                    
+                    // Control todo form visibility
+                    const todoForm = document.getElementById('todoForm');
+                    todoForm.style.display = activeSection === todoSection ? 'block' : 'none';
+                }
 
-                todoNavBtn.addEventListener('click', () => {
-                    setActiveButton(todoNavBtn);
-                    todoForm.style.display = 'block';
-                    todosContainer.style.display = 'grid';
-                    productSection.style.display = 'none';
-                    transactionSection.style.display = 'none';
-                });
-
-                productNavBtn.addEventListener('click', () => {
-                    setActiveButton(productNavBtn);
-                    todoForm.style.display = 'none';
-                    todosContainer.style.display = 'none';
-                    productSection.style.display = 'block';
-                    transactionSection.style.display = 'none';
-                });
-
-                transactionNavBtn.addEventListener('click', () => {
-                    setActiveButton(transactionNavBtn);
-                    todoForm.style.display = 'none';
-                    todosContainer.style.display = 'none';
-                    productSection.style.display = 'none';
-                    transactionSection.style.display = 'block';
-                });
+                todoNavBtn.addEventListener('click', () => showSection(todoSection, todoNavBtn));
+                productNavBtn.addEventListener('click', () => showSection(productSection, productNavBtn));
+                transactionNavBtn.addEventListener('click', () => showSection(transactionSection, transactionNavBtn));
+                settingsNavBtn.addEventListener('click', () => showSection(settingsSection, settingsNavBtn));
             }
 
             setupProductManagement() {
@@ -1224,5 +1329,69 @@ const firebaseConfig = {
         // Initialize the app
         const app = new TodoApp();
     </script>
+<script>
+    // Settings functionality
+    const settingsSection = document.getElementById('settingsSection');
+    const businessSettingsForm = document.getElementById('businessSettingsForm');
+    const settingsNavBtn = document.getElementById('settingsNavBtn');
+
+    // Navigation handling for settings
+    settingsNavBtn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        settingsNavBtn.classList.add('active');
+        
+        // Hide other sections
+        document.getElementById('todoForm').style.display = 'none';
+        document.getElementById('todosContainer').style.display = 'none';
+        document.getElementById('productSection').style.display = 'none';
+        
+        // Show settings section
+        settingsSection.style.display = 'block';
+        
+        // Load saved settings
+        loadSettings();
+    });
+
+    // Load settings from Firebase
+    async function loadSettings() {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        try {
+            const settingsRef = firebase.database().ref(`users/${user.uid}/settings`);
+            const snapshot = await settingsRef.once('value');
+            const settings = snapshot.val() || {};
+
+            // Populate form fields
+            document.getElementById('companyName').value = settings.companyName || '';
+            // Add more field population as needed
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+
+    // Save settings to Firebase
+    businessSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert('Please login to save settings');
+            return;
+        }
+
+        const settings = {
+            companyName: document.getElementById('companyName').value.trim(),
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        try {
+            await firebase.database().ref(`users/${user.uid}/settings`).update(settings);
+            alert('Settings saved successfully!');
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings. Please try again.');
+        }
+    });
+</script>
 </body>
 </html>

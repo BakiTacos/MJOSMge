@@ -742,7 +742,13 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
     const pageWidth = doc.internal.pageSize.getWidth();
     
     // Add business name at the top
-    const businessName = document.getElementById('companyName').value || 'Business Name';
+    const user = firebase.auth().currentUser;
+    let businessName = 'Business Name';
+    if (user) {
+        const settingsSnapshot = await firebase.database().ref(`users/${user.uid}/settings`).once('value');
+        const settings = settingsSnapshot.val() || {};
+        businessName = settings.companyName || 'Business Name';
+    }
     doc.setFontSize(18);
     doc.text(businessName, pageWidth / 2, 20, { align: 'center' });
     
@@ -764,7 +770,7 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
     
     doc.text(`Invoice #: ${invoiceNumber}`, 20, yPosition);
     doc.text(`Date: ${today}`, 20, yPosition + 10);
-    
+
     // Add transaction items
     const transactionRef = firebase.database().ref('transactions');
     const transactionSnapshot = await transactionRef.once('value');
@@ -792,9 +798,9 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
     const finalY = doc.previousAutoTable.finalY + 10;
     doc.text(`Total: ${total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}`, pageWidth - 30, finalY, { align: 'right' });
     
-    // Add signature line
+    // Add business signature line
     doc.line(20, finalY + 30, 80, finalY + 30);
-    doc.text('Shop Signature', 20, finalY + 35);
+    doc.text(businessName, 20, finalY + 35);
     
     // Save the PDF
     doc.save(`invoice-${invoiceNumber}.pdf`);
@@ -1612,16 +1618,42 @@ const firebaseConfig = {
 
         const settings = {
             companyName: document.getElementById('companyName').value.trim(),
+            businessDescription: document.getElementById('businessAddress').value.trim(),
+            businessLogo: document.getElementById('bussinessLogo').value.trim(),
             updatedAt: firebase.database.ServerValue.TIMESTAMP
         };
 
         try {
             await firebase.database().ref(`users/${user.uid}/settings`).update(settings);
-            alert('Settings saved successfully!');
+            alert('Business settings saved successfully!');
         } catch (error) {
             console.error('Error saving settings:', error);
             alert('Error saving settings. Please try again.');
         }
+    });
+
+    // Load business settings from Firebase
+    async function loadBusinessSettings() {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        try {
+            const settingsRef = firebase.database().ref(`users/${user.uid}/settings`);
+            const snapshot = await settingsRef.once('value');
+            const settings = snapshot.val() || {};
+
+            // Populate business form fields
+            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('businessAddress').value = settings.businessDescription || '';
+            document.getElementById('bussinessLogo').value = settings.businessLogo || '';
+        } catch (error) {
+            console.error('Error loading business settings:', error);
+        }
+    }
+
+    // Load business settings when settings section is shown
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBusinessSettings();
     });
 </script>
         <script>

@@ -689,7 +689,10 @@
 </div>
 
 <script>
-function showExportPopup() {
+let currentExportSection = 'transactions';
+
+function showExportPopup(section = 'transactions') {
+    currentExportSection = section;
     const exportPopup = document.getElementById('exportPopup');
     const overlay = document.getElementById('quantityPopupOverlay');
     const customerSelect = document.getElementById('customerSelect');
@@ -718,7 +721,8 @@ function hideExportPopup() {
     document.getElementById('quantityPopupOverlay').style.display = 'none';
 }
 
-document.getElementById('exportTransactionBtn').addEventListener('click', showExportPopup);
+document.getElementById('exportTransactionBtn').addEventListener('click', () => showExportPopup('transactions'));
+document.getElementById('exportTransactionBtn2').addEventListener('click', () => showExportPopup('transactions2'));
 document.getElementById('cancelExport').addEventListener('click', hideExportPopup);
 document.getElementById('quantityPopupOverlay').addEventListener('click', hideExportPopup);
 
@@ -734,8 +738,8 @@ document.getElementById('confirmExportWithCustomer').addEventListener('click', a
         const customerSnapshot = await firebase.database().ref('customers').child(customerId).once('value');
         const customer = customerSnapshot.val();
 
-        // Fetch transactions
-        const transactionSnapshot = await firebase.database().ref('transactions').once('value');
+        // Fetch transactions from the correct section
+        const transactionSnapshot = await firebase.database().ref(currentExportSection).once('value');
         const transactions = [];
         transactionSnapshot.forEach(childSnapshot => {
             transactions.push(childSnapshot.val());
@@ -756,8 +760,8 @@ document.getElementById('confirmExportWithCustomer').addEventListener('click', a
 
 document.getElementById('confirmExportSimple').addEventListener('click', async () => {
     try {
-        // Fetch transactions only
-        const transactionSnapshot = await firebase.database().ref('transactions').once('value');
+        // Fetch transactions only from the correct section
+        const transactionSnapshot = await firebase.database().ref(currentExportSection).once('value');
         const transactions = [];
         transactionSnapshot.forEach(childSnapshot => {
             transactions.push(childSnapshot.val());
@@ -812,8 +816,8 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
     doc.text(`Invoice #: ${invoiceNumber}`, 20, yPosition);
     doc.text(`Date: ${today}`, 20, yPosition + 10);
 
-    // Add transaction items
-    const transactionRef = firebase.database().ref('transactions');
+    // Add transaction items from the correct section
+    const transactionRef = firebase.database().ref(currentExportSection);
     const transactionSnapshot = await transactionRef.once('value');
     const transactions = [];
     transactionSnapshot.forEach(childSnapshot => {

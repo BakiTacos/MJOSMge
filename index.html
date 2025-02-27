@@ -97,10 +97,6 @@
                                 <label for="bussinessLogo">Bussiness Logo</label>
                                 <input type="text" id="bussinessLogo" name="bussinessLogo">
                             </div>
-                            <div class="form-group">
-                                <label for="percentageFee">Percentage Fee (%)</label>
-                                <input type="number" id="percentageFee" name="percentageFee" min="0" max="100" step="0.1" value="12" required>
-                            </div>
                             <button type="submit" class="save-btn">Save Business Settings</button>
                         </form>
                     </div>
@@ -1063,7 +1059,7 @@ const firebaseConfig = {
                         currency: 'IDR'
                     }).format(product.sellingPrice || product.price);
                     
-                    const profitLoss = product.sellingPrice - product.price - 1000 - (product.sellingPrice * 0.12);
+                    const profitLoss = product.sellingPrice - product.price - 1000 - (product.sellingPrice * 0.125); // Fixed 12% fee
                     const formattedProfitLoss = new Intl.NumberFormat('id-ID', {
                         style: 'currency',
                         currency: 'IDR'
@@ -1175,7 +1171,7 @@ const firebaseConfig = {
                         currency: 'IDR'
                     }).format(product.sellingPrice || product.price);
                     
-                    const profitLoss = product.sellingPrice - product.price - 1000 - (product.sellingPrice * 0.12);
+                    const profitLoss = product.sellingPrice - product.price - 1000 - (product.sellingPrice * 0.125); // Fixed 12% fee
                     const formattedProfitLoss = new Intl.NumberFormat('id-ID', {
                         style: 'currency',
                         currency: 'IDR'
@@ -1388,7 +1384,7 @@ const firebaseConfig = {
     const settingsNavBtn = document.getElementById('settingsNavBtn');
 
     // Navigation handling for settings
-    settingsNavBtn.addEventListener('click', () => {
+    settingsNavBtn.addEventListener('click', async () => {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         settingsNavBtn.classList.add('active');
         
@@ -1399,9 +1395,19 @@ const firebaseConfig = {
         
         // Show settings section
         settingsSection.style.display = 'block';
-        
-        // Load saved settings
-        loadSettings();
+
+        // Load settings from Firebase
+        const user = firebase.auth().currentUser;
+        if (user) {
+            const settingsSnapshot = await firebase.database().ref(`users/${user.uid}/settings`).once('value');
+            const settings = settingsSnapshot.val() || {};
+            
+            // Update form fields with saved settings
+            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('businessAddress').value = settings.businessDescription || '';
+            document.getElementById('bussinessLogo').value = settings.businessLogo || '';
+
+        }
     });
 
     // Load settings from Firebase
@@ -1435,6 +1441,7 @@ const firebaseConfig = {
             companyName: document.getElementById('companyName').value.trim(),
             businessDescription: document.getElementById('businessAddress').value.trim(),
             businessLogo: document.getElementById('bussinessLogo').value.trim(),
+
             updatedAt: firebase.database.ServerValue.TIMESTAMP
         };
 

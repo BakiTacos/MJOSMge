@@ -114,6 +114,10 @@
                                 <label for="customerPhone">Phone Number</label>
                                 <input type="tel" id="customerPhone" name="customerPhone">
                             </div>
+                            <div class="form-group">
+                                <label for="customerAddress">Address</label>
+                                <textarea id="customerAddress" name="customerAddress"></textarea>
+                            </div>
                             <button type="submit" class="save-btn">Save Customer</button>
                         </form>
                     </div>
@@ -124,6 +128,7 @@
                                 <th>Customer ID</th>
                                 <th>Name</th>
                                 <th>Phone Number</th>
+                                <th>Address</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -441,7 +446,11 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
     doc.text(businessPhone, 20, 34);
 
     // Invoice title and number
-    const invoiceNumber = `INV-${Date.now()}`;
+    const currentDate = new Date();
+    const dateStr = currentDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '');
+    const randomNumbers1 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const randomNumbers2 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const invoiceNumber = `INVOICE-${randomNumbers1}${dateStr}${randomNumbers2}`;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('INVOICE', pageWidth - 20, 20, { align: 'right' });
@@ -1404,7 +1413,7 @@ const firebaseConfig = {
             
             // Update form fields with saved settings
             document.getElementById('companyName').value = settings.companyName || '';
-            document.getElementById('businessAddress').value = settings.businessDescription || '';
+            document.getElementById('businessAddress').value = settings.businessAddress || '';
             document.getElementById('bussinessLogo').value = settings.businessLogo || '';
 
         }
@@ -1466,7 +1475,7 @@ const firebaseConfig = {
 
             // Populate business form fields
             document.getElementById('companyName').value = settings.companyName || '';
-            document.getElementById('businessAddress').value = settings.businessDescription || '';
+            document.getElementById('businessAddress').value = settings.businessAddress || '';
             document.getElementById('bussinessLogo').value = settings.businessLogo || '';
         } catch (error) {
             console.error('Error loading business settings:', error);
@@ -1484,11 +1493,13 @@ const firebaseConfig = {
                 event.preventDefault();
                 const customerName = document.getElementById('customerName').value;
                 const customerPhone = document.getElementById('customerPhone').value;
+                const customerAddress = document.getElementById('customerAddress').value;
                 const customerId = document.getElementById('customerId').value || Date.now().toString();
 
                 firebase.database().ref('customers/' + customerId).set({
                     name: customerName,
                     phone: customerPhone,
+                    address: customerAddress,
                     id: customerId
                 }).then(() => {
                     alert('Customer saved successfully!');
@@ -1511,6 +1522,7 @@ const firebaseConfig = {
                             <td>${customer.id}</td>
                             <td>${customer.name}</td>
                             <td>${customer.phone || 'N/A'}</td>
+                            <td>${customer.address || 'N/A'}</td>
                             <td>
                                 <button onclick="editCustomer('${customer.id}')" class="edit-btn">Edit</button>
                                 <button onclick="deleteCustomer('${customer.id}')" class="delete-product-btn">Delete</button>
@@ -1526,6 +1538,7 @@ const firebaseConfig = {
                     const customer = snapshot.val();
                     document.getElementById('customerName').value = customer.name;
                     document.getElementById('customerPhone').value = customer.phone || '';
+                    document.getElementById('customerAddress').value = customer.address || '';
                     document.getElementById('customerId').value = customer.id;
                 });
             }

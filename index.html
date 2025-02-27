@@ -58,8 +58,8 @@
             </section>
 
             <section class="todo-section">
-                <h2>WA Category</h2>
-                <ul class="todo-list" id="waCategoryList"></ul>
+                <h2>Pra Category</h2>
+                <ul class="todo-list" id="praCategoryList"></ul>
             </section>
 
             <section class="todo-section">
@@ -276,6 +276,48 @@
     </div>
 </div>
 
+<style>
+.todo-section {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.todo-section h2 {
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.todo-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.todo-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.todo-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.todo-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.todo-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
 <script>
 let currentExportSection = 'transactions';
 
@@ -776,7 +818,7 @@ const firebaseConfig = {
                 this.form = document.getElementById('todoForm');
                 this.input = document.getElementById('todoInput');
                 this.addCategoryList = document.getElementById('addCategoryList');
-                this.waCategoryList = document.getElementById('waCategoryList');
+                this.praCategoryList = document.getElementById('praCategoryList');
                 this.rmCategoryList = document.getElementById('rmCategoryList');
                 this.zhCategoryList = document.getElementById('zhCategoryList');
                 this.mainTodoList = document.getElementById('mainTodoList');
@@ -895,8 +937,8 @@ const firebaseConfig = {
                     let category = 'main';
                     if (text.toLowerCase().includes('add')) {
                         category = 'add';
-                    } else if (text.toLowerCase().includes('wa')) {
-                        category = 'wa';
+                    } else if (text.toLowerCase().includes('pra')) {
+                        category = 'pra';
                     } else if (text.toLowerCase().includes('rm')) {
                         category = 'rm';
                     } else if (text.toLowerCase().includes('zh')) {
@@ -1205,7 +1247,7 @@ const firebaseConfig = {
                 li.appendChild(checkbox);
                 li.appendChild(span);
     
-                if (todo.category === 'wa' || todo.category === 'zh') {
+                if (todo.category === 'pra' || todo.category === 'zh') {
                     const shareBtn = document.createElement('button');
                     shareBtn.textContent = 'Share on WhatsApp';
                     shareBtn.className = 'btn';
@@ -1224,13 +1266,13 @@ const firebaseConfig = {
 
             renderTodos() {
                 const addCategoryTodos = this.todos.filter(todo => todo.category === 'add');
-                const waCategoryTodos = this.todos.filter(todo => todo.category === 'wa');
+                const praCategoryTodos = this.todos.filter(todo => todo.category === 'pra');
                 const rmCategoryTodos = this.todos.filter(todo => todo.category === 'rm');
                 const zhCategoryTodos = this.todos.filter(todo => todo.category === 'zh');
                 const mainTodos = this.todos.filter(todo => todo.category === 'main');
 
                 this.addCategoryList.innerHTML = '';
-                this.waCategoryList.innerHTML = '';
+                this.praCategoryList.innerHTML = '';
                 this.rmCategoryList.innerHTML = '';
                 this.zhCategoryList.innerHTML = '';
                 this.mainTodoList.innerHTML = '';
@@ -1239,8 +1281,8 @@ const firebaseConfig = {
                     this.addCategoryList.appendChild(this.createTodoElement(todo));
                 });
 
-                waCategoryTodos.forEach(todo => {
-                    this.waCategoryList.appendChild(this.createTodoElement(todo));
+                praCategoryTodos.forEach(todo => {
+                    this.praCategoryList.appendChild(this.createTodoElement(todo));
                 });
 
                 rmCategoryTodos.forEach(todo => {
@@ -1252,18 +1294,18 @@ const firebaseConfig = {
                 });
 
                 // Add Share All button for WA category
-                if (waCategoryTodos.length > 0) {
+                if (praCategoryTodos.length > 0) {
                     const shareAllBtn = document.createElement('button');
                     shareAllBtn.textContent = 'Share All to WhatsApp';
                     shareAllBtn.className = 'btn';
                     shareAllBtn.style.width = '100%';
                     shareAllBtn.style.marginTop = '1rem';
                     shareAllBtn.addEventListener('click', () => {
-                        const allTasks = waCategoryTodos.map(todo => todo.text).join('\n');
+                        const allTasks = praCategoryTodos.map(todo => todo.text).join('\n');
                         const text = encodeURIComponent(allTasks);
                         window.open(`https://wa.me/+6282110683255?text=${text}`);
                     });
-                    this.waCategoryList.appendChild(shareAllBtn);
+                    this.praCategoryList.appendChild(shareAllBtn);
 
                     const deleteAllBtn = document.createElement('button');
                     deleteAllBtn.textContent = 'Delete All';
@@ -1272,13 +1314,13 @@ const firebaseConfig = {
                     deleteAllBtn.style.marginTop = '1rem';
                     deleteAllBtn.style.backgroundColor = '#ef4444';
                     deleteAllBtn.addEventListener('click', async () => {
-                        if (confirm('Are you sure you want to delete all tasks in WA category?')) {
-                            for (const todo of waCategoryTodos) {
+                        if (confirm('Are you sure you want to delete all tasks in Pra category?')) {
+                            for (const todo of praCategoryTodos) {
                                 await this.deleteTodo(todo.id);
                             }
                         }
                     });
-                    this.waCategoryList.appendChild(deleteAllBtn);
+                    this.praCategoryList.appendChild(deleteAllBtn);
                 }
 
                 // Add Share All button for Zhonguo List

@@ -173,10 +173,28 @@
             <table class="product-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>
+                            Name
+                            <div class="sort-buttons">
+                                <button class="sort-btn" data-sort="name" data-order="asc">↑</button>
+                                <button class="sort-btn" data-sort="name" data-order="desc">↓</button>
+                            </div>
+                        </th>
                         <th>Purchase Price</th>
-                        <th>Selling Price</th>
-                        <th>Profit/Loss</th>
+                        <th>
+                            Selling Price
+                            <div class="sort-buttons">
+                                <button class="sort-btn" data-sort="sellingPrice" data-order="asc">↑</button>
+                                <button class="sort-btn" data-sort="sellingPrice" data-order="desc">↓</button>
+                            </div>
+                        </th>
+                        <th>
+                            Profit/Loss
+                            <div class="sort-buttons">
+                                <button class="sort-btn" data-sort="profitLoss" data-order="asc">↑</button>
+                                <button class="sort-btn" data-sort="profitLoss" data-order="desc">↓</button>
+                            </div>
+                        </th>
                         <th>Unit</th>
                         <th>Category</th>
                         <th>SKU</th>
@@ -283,6 +301,27 @@
 </div>
 
 <style>
+            .sort-buttons {
+                display: inline-flex;
+                flex-direction: column;
+                margin-left: 5px;
+                vertical-align: middle;
+            }
+            .sort-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+                cursor: pointer;
+                background: none;
+                border: none;
+                color: #666;
+            }
+            .sort-btn:hover {
+                color: #000;
+            }
+            .sort-btn.active {
+                color: #3b82f6;
+                font-weight: bold;
+            }
 .todo-section {
     background-color: #fff;
     border-radius: 8px;
@@ -1028,6 +1067,39 @@ const firebaseConfig = {
                 const productForm = document.getElementById('productForm');
                 const searchInput = document.getElementById('productSearchInput');
                 const categoryButtons = document.querySelectorAll('.category-btn');
+                const sortButtons = document.querySelectorAll('.sort-btn');
+
+                // Add sorting functionality
+                sortButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Remove active class from all sort buttons
+                        sortButtons.forEach(btn => btn.classList.remove('active'));
+                        // Add active class to clicked button
+                        button.classList.add('active');
+
+                        const sortBy = button.dataset.sort;
+                        const order = button.dataset.order;
+                        
+                        const sortedProducts = [...this.products].sort((a, b) => {
+                            if (sortBy === 'name') {
+                                return order === 'asc' ? 
+                                    a.name.localeCompare(b.name) : 
+                                    b.name.localeCompare(a.name);
+                            } else if (sortBy === 'sellingPrice') {
+                                const priceA = a.sellingPrice || a.price;
+                                const priceB = b.sellingPrice || b.price;
+                                return order === 'asc' ? priceA - priceB : priceB - priceA;
+                            } else if (sortBy === 'profitLoss') {
+                                const profitLossA = a.sellingPrice - a.price - 1000 - (a.sellingPrice * 0.125);
+                                const profitLossB = b.sellingPrice - b.price - 1000 - (b.sellingPrice * 0.125);
+                                return order === 'asc' ? profitLossA - profitLossB : profitLossB - profitLossA;
+                            }
+                            return 0;
+                        });
+                        
+                        this.renderFilteredProducts(sortedProducts);
+                    });
+                });
                 
                 productForm.addEventListener('submit', (e) => this.handleProductSubmit(e));
                 

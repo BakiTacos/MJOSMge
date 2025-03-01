@@ -1,0 +1,20 @@
+{
+    "name": "My Awesome App",
+    "short_name": "AwesomeApp",
+    "icons": [
+        {
+            "src": "https://i.ibb.co/rRWgGvy/temp-Image-Ygf-Xo-I.jpg",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://i.ibb.co/rRWgGvy/temp-Image-Ygf-Xo-I.jpg",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "display": "standalone"
+}

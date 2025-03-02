@@ -468,18 +468,25 @@ flex-direction: column;
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
     padding: 1rem;
+    margin: 0 auto;
+    max-width: 1200px;
 }
 
 .grid-card {
-    background-color: #ffffff;
+    background-color: var(--card-bg);
     border-radius: 0.5rem;
-    padding: 1.5rem;
+    padding: 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 180px;
+    text-align: center;
 }
 
 .grid-card:hover {
@@ -488,18 +495,37 @@ flex-direction: column;
 }
 
 .grid-card h3 {
-    margin-bottom: 0.5rem;
-    color: #1f2937;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-size: 1.5rem;
 }
 
 .grid-card p {
-    color: #6b7280;
+    color: var(--text-color);
     margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 768px) {
     .grid-container {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+
+    .grid-card {
+        padding: 1.5rem;
+        min-height: 150px;
+    }
+
+    .grid-card h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .grid-card p {
+        font-size: 0.9rem;
     }
 }
 

@@ -42,6 +42,20 @@ window.addEventListener('load', function() {
     }
 });
 
+// Add event listener for Android back button
+window.addEventListener('popstate', function(event) {
+    // Hide todo form and container when navigating back
+    document.getElementById('todoForm').style.display = 'none';
+    document.getElementById('todosContainer').style.display = 'none';
+    
+    // Show home section
+    document.getElementById('homeSection').style.display = 'block';
+    
+    // Update active navigation button
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('homeNavBtn').classList.add('active');
+});
+
 function updateProductTable() {
     const productTableBody = document.getElementById('productTableBody');
     const user = firebase.auth().currentUser;

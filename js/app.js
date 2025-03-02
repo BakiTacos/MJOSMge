@@ -98,9 +98,89 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             updateTransactionTable();
             updateTransactionTable2();
+            loadCustomers(); // Load customer data when transaction page loads
+            initializeCustomerSettingsToggle(); // Initialize customer settings toggle
+            initializeTransactionToggle(); // Initialize transaction toggle
         }
     });
 });
+
+// Initialize transaction toggle functionality
+function initializeTransactionToggle() {
+    const toggleBtn = document.getElementById('toggleTransactions');
+    const transactionContent = document.getElementById('transactionContent');
+    const transaction2Content = document.getElementById('transaction2Content');
+    const deleteAllBtn = document.getElementById('deleteAllTransactionsBtn');
+    const deleteAllBtn2 = document.getElementById('deleteAllTransactionsBtn2');
+    const user = firebase.auth().currentUser;
+
+    // Load saved state from Firebase
+    if (user) {
+        firebase.database().ref(`todos/${user.uid}/transactionsVisible`).once('value')
+            .then((snapshot) => {
+                const isVisible = snapshot.val() !== false; // Default to visible if not set
+                transactionContent.style.display = isVisible ? 'block' : 'none';
+                transaction2Content.style.display = isVisible ? 'block' : 'none';
+                if (deleteAllBtn) deleteAllBtn.style.display = isVisible ? 'block' : 'none';
+                if (deleteAllBtn2) deleteAllBtn2.style.display = isVisible ? 'block' : 'none';
+                toggleBtn.style.backgroundColor = isVisible ? '#ef4444' : '#10b981';
+                toggleBtn.textContent = isVisible ? 'Hide Transactions' : 'Transactions';
+            });
+    }
+
+    // Add click event listener
+    toggleBtn.addEventListener('click', () => {
+        const isCurrentlyVisible = transactionContent.style.display !== 'none';
+        const newVisibility = !isCurrentlyVisible;
+
+        // Update UI
+        transactionContent.style.display = newVisibility ? 'block' : 'none';
+        transaction2Content.style.display = newVisibility ? 'block' : 'none';
+        if (deleteAllBtn) deleteAllBtn.style.display = newVisibility ? 'block' : 'none';
+        if (deleteAllBtn2) deleteAllBtn2.style.display = newVisibility ? 'block' : 'none';
+        toggleBtn.style.backgroundColor = newVisibility ? '#ef4444' : '#10b981';
+        toggleBtn.textContent = newVisibility ? 'Hide Transactions' : 'Transactions';
+
+        // Save state to Firebase
+        if (user) {
+            firebase.database().ref(`todos/${user.uid}/transactionsVisible`).set(newVisibility);
+        }
+    });
+}
+
+// Initialize customer settings toggle functionality
+function initializeCustomerSettingsToggle() {
+    const toggleBtn = document.getElementById('toggleCustomerSettings');
+    const customerSettingsContent = document.getElementById('customerSettingsContent');
+    const user = firebase.auth().currentUser;
+
+    // Load saved state from Firebase
+    if (user) {
+        firebase.database().ref(`todos/${user.uid}/customerSettingsVisible`).once('value')
+            .then((snapshot) => {
+                const isVisible = snapshot.val();
+                customerSettingsContent.style.display = isVisible ? 'block' : 'none';
+                toggleBtn.style.backgroundColor = isVisible ? '#ef4444' : '#3b82f6';
+                toggleBtn.textContent = isVisible ? 'Hide Customer Lists' : 'Customers';
+            });
+    }
+
+    // Add click event listener
+    toggleBtn.addEventListener('click', () => {
+        const isCurrentlyVisible = customerSettingsContent.style.display !== 'none';
+        const newVisibility = !isCurrentlyVisible;
+
+        // Update UI
+        customerSettingsContent.style.display = newVisibility ? 'block' : 'none';
+        toggleBtn.style.backgroundColor = newVisibility ? '#ef4444' : '#3b82f6';
+        toggleBtn.textContent = newVisibility ? 'Hide Customer Lists' : 'Customer';
+
+        // Save state to Firebase
+        if (user) {
+            firebase.database().ref(`todos/${user.uid}/customerSettingsVisible`).set(newVisibility);
+        }
+    });
+}
 
 function updateTransactionTable2() {
     const user = firebase.auth().currentUser;
@@ -461,14 +541,20 @@ function updateTransactionTable() {
                             <td>${customer.phone || 'N/A'}</td>
                             <td>${customer.address || 'N/A'}</td>
                             <td>
-                                <button onclick="editCustomer('${customer.id}')" class="edit-btn">Edit</button>
+                                <button class="edit-btn">Edit</button>
                                 <button onclick="deleteCustomer('${customer.id}')" class="delete-product-btn">Delete</button>
                             </td>
                         `;
+                        
+                        // Add click event listener to edit button
+                        const editBtn = row.querySelector('.edit-btn');
+                        editBtn.addEventListener('click', () => editCustomer(customer.id));
+                        
                         tableBody.appendChild(row);
                     });
                 });
             }
+            
 
             function editCustomer(customerId) {
                 const user = firebase.auth().currentUser;

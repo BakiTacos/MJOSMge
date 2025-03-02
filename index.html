@@ -135,40 +135,6 @@
                         </form>
                     </div>
                 </div>
-                <div class="settings-content">
-                    <div class="settings-group">
-                        <h3>Customer Management</h3>
-                        <form id="customerSettingsForm">
-                            <input type="hidden" id="customerId">
-                            <div class="form-group">
-                                <label for="customerName">Customer Name</label>
-                                <input type="text" id="customerName" name="customerName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="customerPhone">Phone Number</label>
-                                <input type="tel" id="customerPhone" name="customerPhone">
-                            </div>
-                            <div class="form-group">
-                                <label for="customerAddress">Address</label>
-                                <textarea id="customerAddress" name="customerAddress"></textarea>
-                            </div>
-                            <button type="submit" class="save-btn">Save Customer</button>
-                        </form>
-                    </div>
-                    <h3>Customer List</h3>
-                    <table class="product-table">
-                        <thead>
-                            <tr>
-                                <th>Customer ID</th>
-                                <th>Name</th>
-                                <th>Phone Number</th>
-                                <th>Address</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTableBody"></tbody>
-                    </table>
-                </div>
             </section>
         </div>
 
@@ -240,45 +206,86 @@
         </div>
 
 
-
-        <div id="transactionSection" class="product-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Transaction</h2>
-                <button id="exportTransactionBtn" class="btn" style="background-color: #10b981;">Export</button>
+        <div id="transactionSection" class="product-section" style="display: none; display: flex; flex-direction: column; align-items: center; width: 100%;">
+            <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1rem; width: 100%;">
+                <button id="toggleCustomerSettings" class="btn" style="background-color: #3b82f6;">Toggle Customer Settings</button>
+                <button id="toggleTransactions" class="btn" style="background-color: #10b981;">Toggle Transactions</button>
             </div>
-            <table class="product-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionTableBody"></tbody>
-            </table>
+            <div id="customerSettingsContent" class="settings-content" style="margin-bottom: 2rem; width: 100%; max-width: 1200px;">
+                <div class="settings-group">
+                    <h3>Customer Management</h3>
+                    <form id="customerSettingsForm">
+                        <input type="hidden" id="customerId">
+                        <div class="form-group">
+                            <label for="customerName">Customer Name</label>
+                            <input type="text" id="customerName" name="customerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerPhone">Phone Number</label>
+                            <input type="tel" id="customerPhone" name="customerPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="customerAddress">Address</label>
+                            <textarea id="customerAddress" name="customerAddress"></textarea>
+                        </div>
+                        <button type="submit" class="save-btn">Save Customer</button>
+                    </form>
+                </div>
+                <h3>Customer List</h3>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Name</th>
+                            <th>Phone Number</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTableBody"></tbody>
+                </table>
+            </div>
+            <div id="transactionContent" style="display: block;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Transaction</h2>
+                    <button id="exportTransactionBtn" class="btn" style="background-color: #10b981;">Export</button>
+                </div>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
 
 
 <div id="transactionSection2" class="product-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Transaction 2</h2>
-                <button id="exportTransactionBtn2" class="btn" style="background-color: #10b981;">Export</button>
+            <div id="transaction2Content" style="display: block;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Transaction 2</h2>
+                    <button id="exportTransactionBtn2" class="btn" style="background-color: #10b981;">Export</button>
+                </div>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody2"></tbody>
+                </table>
             </div>
-            <table class="product-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionTableBody2"></tbody>
-            </table>
         </div>
 
         
@@ -340,6 +347,8 @@
         <button id="cancelExport" class="btn" style="width: 100%;">Cancel</button>
     </div>
 </div>
+
+<div id="customerActionPopupOverlay" class="product-popup-overlay" style="display: none;"></div>
     <script src="./js/firebase.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/export.js"></script>

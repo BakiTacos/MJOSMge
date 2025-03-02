@@ -17,14 +17,21 @@
 </head>
 <body>
     
+    
     <div class="container">
         <header class="header">
-            <h1>Gakata</h1>
-            <nav class="navbar" style="display: none;">
-                <button id="todoNavBtn" class="nav-btn active">Todo List</button>
-                <button id="productNavBtn" class="nav-btn">Product Management</button>
-                <button id="transactionNavBtn" class="nav-btn">Transaction</button>
-                <button id="settingsNavBtn" class="nav-btn">Settings</button>
+            <nav class="navbar" style="display: flex; width: 100%; justify-content: center; align-items: center; padding: 1rem; position: relative;">
+                <button id="menuToggle" class="menu-toggle" style="display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0.5rem; position: absolute; left: 1rem;">
+                    ☰
+                </button>
+                <h1 style="margin: 0;">Gakata</h1>
+                <div id="navLinks" style="display: flex; gap: 1rem;">
+                    <button id="homeNavBtn" class="nav-btn active">Home</button>
+                    <button id="todoNavBtn" class="nav-btn">Todo List</button>
+                    <button id="productNavBtn" class="nav-btn">Product Management</button>
+                    <button id="transactionNavBtn" class="nav-btn">Transaction</button>
+                    <button id="settingsNavBtn" class="nav-btn">Settings</button>
+                </div>
             </nav>
             <div id="authStatus" style="margin-top: 1rem;">
                 <div id="authForms">
@@ -49,6 +56,27 @@
                 </div>
             </div>
         </header>
+
+        <div id="homeSection" class="home-section" style="display: none;">
+            <div class="grid-container">
+                <div class="grid-card" onclick="document.getElementById('todoNavBtn').click()">
+                    <h3>List To Do</h3>
+                    <p>Manage your tasks and categories</p>
+                </div>
+                <div class="grid-card" onclick="document.getElementById('productNavBtn').click()">
+                    <h3>Product</h3>
+                    <p>Manage your product inventory</p>
+                </div>
+                <div class="grid-card" onclick="document.getElementById('transactionNavBtn').click()">
+                    <h3>Transaction</h3>
+                    <p>View and manage transactions</p>
+                </div>
+                <div class="grid-card" onclick="document.getElementById('settingsNavBtn').click()">
+                    <h3>Settings</h3>
+                    <p>Configure business settings</p>
+                </div>
+            </div>
+        </div>
 
         <form class="todo-form" id="todoForm" style="display: none;">
             <input type="text" class="todo-input" id="todoInput" placeholder="Enter your todo item..." required>
@@ -314,6 +342,8 @@
         <button id="cancelExport" class="btn" style="width: 100%;">Cancel</button>
     </div>
 </div>
-    <script src="./app.js"></script>
+    <script src="./js/firebase.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="./js/export.js"></script>
     </body>
 </html>

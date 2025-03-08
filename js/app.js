@@ -1,3 +1,14 @@
+// Business Settings Navigation
+document.getElementById('businessSettingsBtn').addEventListener('click', () => {
+    document.getElementById('settingsSection').style.display = 'none';
+    document.getElementById('businessSettingsSection').style.display = 'block';
+});
+
+document.getElementById('backToSettings').addEventListener('click', () => {
+    document.getElementById('businessSettingsSection').style.display = 'none';
+    document.getElementById('settingsSection').style.display = 'block';
+});
+
 // Add event listener for back button press
 window.addEventListener('load', function() {
     if (window.history && window.history.pushState) {
@@ -10,7 +21,23 @@ window.addEventListener('load', function() {
                 document.getElementById('transactionSection'),
                 document.getElementById('transactionSection2'),
                 document.getElementById('settingsSection')
+                
             ];
+            document.getElementById('businessSettingsBtn').addEventListener('click', function() {
+                // Hide all sections
+                const sections = [
+                    document.getElementById('homeSection'),
+                    document.getElementById('todosContainer'),
+                    document.getElementById('productSection'),
+                    document.getElementById('transactionSection'),
+                    document.getElementById('transactionSection2'),
+                    document.getElementById('settingsSection')
+                ];
+                sections.forEach(section => {
+                    if (section) section.style.display = 'none';
+                });
+                document.getElementById('businessSettingsSection').style.display = 'block';
+            });
 
             // Check if any section other than home is visible
             const isNotHome = sections.some((section, index) => 
@@ -70,12 +97,13 @@ function updateProductTable() {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${product.name}</td>
+                <td>${product.sku}</td>
                 <td>${product.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${product.sellingPrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${(product.sellingPrice - product.price).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${product.unit}</td>
                 <td>${product.category}</td>
-                <td>${product.sku}</td>
+                
                 <td>
                     <button onclick="editProduct('${product.sku}')" class="edit-btn">Edit</button>
                     <button onclick="deleteProduct('${product.sku}')" class="delete-product-btn">Delete</button>
@@ -119,6 +147,7 @@ function updateTransactionTable2() {
         row.innerHTML = `
             <td>${transaction.date}</td>
             <td>${transaction.product}</td>
+            <td>${transaction.sku}</td>
             <td>${transaction.quantity}</td>
             <td>${transaction.price}</td>
             <td>${transaction.total}</td>
@@ -166,6 +195,7 @@ function updateTransactionTable2() {
                     ${new Date(transaction.date).toLocaleDateString()}
                 </td>
                 <td>${transaction.product}</td>
+                <td>${transaction.sku || 'N/A'}</td>
                 <td>${transaction.quantity}</td>
                 <td>${transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
@@ -235,6 +265,7 @@ function updateTransactionTable() {
         row.innerHTML = `
             <td>${transaction.date}</td>
             <td>${transaction.product}</td>
+            <td>${transaction.sku || 'N/A'}</td>
             <td>${transaction.quantity}</td>
             <td>${transaction.price}</td>
             <td>${transaction.total}</td>
@@ -288,6 +319,7 @@ function updateTransactionTable() {
                     ${new Date(transaction.date).toLocaleDateString()}
                 </td>
                 <td>${transaction.product}</td>
+                <td>${transaction.sku || 'N/A'}</td>
                 <td>${transaction.quantity}</td>
                 <td>${transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
                 <td>${transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}</td>
@@ -315,20 +347,55 @@ function updateTransactionTable() {
     
         // Initialize the app
         const app = new TodoApp();
+
+        // Add event listeners for navigation buttons to handle business settings auto-back
+        document.getElementById('homeNavBtn').addEventListener('click', () => {
+            if (document.getElementById('businessSettingsSection').style.display === 'block') {
+                backToSettings();
+            }
+        });
+
+        document.getElementById('todoNavBtn').addEventListener('click', () => {
+            if (document.getElementById('businessSettingsSection').style.display === 'block') {
+                backToSettings();
+            }
+        });
+
+        document.getElementById('productNavBtn').addEventListener('click', () => {
+            if (document.getElementById('businessSettingsSection').style.display === 'block') {
+                backToSettings();
+            }
+        });
+
+        document.getElementById('transactionNavBtn').addEventListener('click', () => {
+            if (document.getElementById('businessSettingsSection').style.display === 'block') {
+                backToSettings();
+            }
+        });
     // Settings functionality
     const settingsSection = document.getElementById('settingsSection');
     const businessSettingsForm = document.getElementById('businessSettingsForm');
     const settingsNavBtn = document.getElementById('settingsNavBtn');
+
+    // Function to hide business settings and show settings section
+    function backToSettings() {
+        document.getElementById('businessSettingsSection').style.display = 'none';
+        settingsSection.style.display = 'block';
+    }
 
     // Navigation handling for settings
     settingsNavBtn.addEventListener('click', async () => {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         settingsNavBtn.classList.add('active');
         
-        // Hide other sections
+        // Hide all sections
         document.getElementById('todoForm').style.display = 'none';
         document.getElementById('todosContainer').style.display = 'none';
         document.getElementById('productSection').style.display = 'none';
+        document.getElementById('transactionSection').style.display = 'none';
+        document.getElementById('transactionSection2').style.display = 'none';
+        document.getElementById('homeSection').style.display = 'none';
+        document.getElementById('businessSettingsSection').style.display = 'none';
         
         // Show settings section
         settingsSection.style.display = 'block';
@@ -341,11 +408,13 @@ function updateTransactionTable() {
             const settings = settingsSnapshot.val() || {};
             
             // Update form fields with saved settings
-            document.getElementById('companyName').value = settings.companyName || '';
-            document.getElementById('businessAddress').value = settings.businessAddress || '';
-            document.getElementById('bussinessLogo').value = settings.businessLogo || '';
-            document.getElementById('businessEmail').value = settings.businessEmail || '';
+            const businessNameInput = document.getElementById('businessName');
+            const businessAddressInput = document.getElementById('businessAddress');
+            const businessEmailInput = document.getElementById('businessEmail');
 
+            if (businessNameInput) businessNameInput.value = settings.companyName || '';
+            if (businessAddressInput) businessAddressInput.value = settings.businessAddress || '';
+            if (businessEmailInput) businessEmailInput.value = settings.businessEmail || '';
         }
     });
 
@@ -360,7 +429,7 @@ function updateTransactionTable() {
             const settings = snapshot.val() || {};
 
             // Populate form fields
-            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('businessName').value = settings.companyName || '';
             // Add more field population as needed
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -377,10 +446,9 @@ function updateTransactionTable() {
         }
 
         const settings = {
-            companyName: document.getElementById('companyName').value.trim(),
-            businessAddress: document.getElementById('businessAddress').value.trim(),
-            businessLogo: document.getElementById('bussinessLogo').value.trim(),
-            businessEmail: document.getElementById('businessEmail').value.trim(),
+            companyName: document.getElementById('businessName')?.value.trim() || '',
+            businessAddress: document.getElementById('businessAddress')?.value.trim() || '',
+            businessEmail: document.getElementById('businessEmail')?.value.trim() || '',
             updatedAt: firebase.database.ServerValue.TIMESTAMP
         };
 
@@ -404,10 +472,13 @@ function updateTransactionTable() {
             const settings = snapshot.val() || {};
 
             // Populate business form fields
-            document.getElementById('companyName').value = settings.companyName || '';
-            document.getElementById('businessAddress').value = settings.businessAddress || '';
-            document.getElementById('bussinessLogo').value = settings.businessLogo || '';
-            document.getElementById('businessEmail').value = settings.businessEmail || '';
+            const businessNameInput = document.getElementById('businessName');
+            const businessAddressInput = document.getElementById('businessAddress');
+            const businessEmailInput = document.getElementById('businessEmail');
+
+            if (businessNameInput) businessNameInput.value = settings.companyName || '';
+            if (businessAddressInput) businessAddressInput.value = settings.businessAddress || '';
+            if (businessEmailInput) businessEmailInput.value = settings.businessEmail || '';
         } catch (error) {
             console.error('Error loading business settings:', error);
         }

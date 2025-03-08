@@ -204,13 +204,14 @@ document.getElementById('confirmExportPDF').addEventListener('click', async func
         
         const tableData = tableTransactions.map(transaction => [
             transaction.product,
+            transaction.sku || transaction.skuCode || 'N/A',
             transaction.quantity,
             transaction.price.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
             transaction.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
         ]);
         
         doc.autoTable({
-            head: [["Nama Barang", "Jumlah", "Harga", "Total"]],
+            head: [["Nama Barang", "SKU", "Jumlah", "Harga", "Total"]],
             body: tableData,
             startY: customerYPosition + 15,
             theme: 'grid',
@@ -526,6 +527,7 @@ document.getElementById('confirmQuantity').addEventListener('click', () => {
             product: selectedProduct.name,
             quantity: quantity,
             price: price,
+            sku: selectedProduct.sku,
             total: quantity * price
         };
         

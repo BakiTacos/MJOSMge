@@ -110,29 +110,11 @@
 
         <div id="settingsSection" class="settings-section" style="display: none;">
             <section class="settings-card">
-                <h2>Business Settings</h2>
-                <div class="settings-content">
-                    <div class="settings-group">
-                        <h3>Bussiness Information</h3>
-                        <form id="businessSettingsForm">
-                            <div class="form-group">
-                                <label for="companyName">Bussiness Name</label>
-                                <input type="text" id="companyName" name="companyName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="businessAddress">Business Address</label>
-                                <textarea id="businessAddress" name="businessAddress"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="businessEmail">Business Email</label>
-                                <input type="email" id="businessEmail" name="businessEmail">
-                            </div>
-                            <div class="form-group">
-                                <label for="bussinessLogo">Bussiness Logo</label>
-                                <input type="text" id="bussinessLogo" name="bussinessLogo">
-                            </div>
-                            <button type="submit" class="save-btn">Save Business Settings</button>
-                        </form>
+                <div class="grid-container" style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div class="grid-card" onclick="document.getElementById('businessSettingsBtn').click()" style="cursor: pointer;">
+                        <h3>Business Settings</h3>
+                        <p>Configure your business information and details</p>
+                        <button id="businessSettingsBtn" style="display: block; visibility: hidden;">Business Settings</button>
                     </div>
                 </div>
                 <div class="settings-content">
@@ -168,6 +150,39 @@
                         </thead>
                         <tbody id="customerTableBody"></tbody>
                     </table>
+                </div>
+            </section>
+        </div>
+
+        <div id="businessSettingsSection" class="settings-section" style="display: none;">
+            <section class="settings-card">
+                <div class="settings-header">
+                    <button id="backToSettings" class="btn" style="margin-bottom: 1rem;">← Back to Settings</button>
+                    <h2>Business Settings</h2>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-group">
+                        <h3>Business Information</h3>
+                        <form id="businessSettingsForm">
+                            <div class="form-group">
+                                <label for="businessName">Business Name</label>
+                                <input type="text" id="businessName" name="businessName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="businessAddress">Business Address</label>
+                                <textarea id="businessAddress" name="businessAddress"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="businessPhone">Business Phone</label>
+                                <input type="tel" id="businessPhone" name="businessPhone">
+                            </div>
+                            <div class="form-group">
+                                <label for="businessEmail">Business Email</label>
+                                <input type="email" id="businessEmail" name="businessEmail">
+                            </div>
+                            <button type="submit" class="save-btn">Save Business Settings</button>
+                        </form>
+                    </div>
                 </div>
             </section>
         </div>
@@ -251,6 +266,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Product</th>
+                        <th>SKU Code</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -272,6 +288,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Product</th>
+                        <th>SKU Code</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
